@@ -32,6 +32,7 @@ import PlotQuestionnaireModal from './components/intake/PlotQuestionnaireModal';
 import HomePage from './components/home/HomePage';
 import { API_ENDPOINTS } from './config/api';
 import { classifyRequirementScope } from './utils/scopeClassifier';
+import { loadActiveSession, saveActiveSession, clearActiveSession } from './utils/sessionPersistence';
 
 // Helper to determine the next consecutive step in the workflow sequence
 function getNextConsecutiveStep(currentNodeId, nodes = [], edges = [], completedSet = new Set()) {
@@ -390,81 +391,55 @@ const FALLBACK_SEED_GRAPH = {
 };
 
 export default function App() {
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'roadmap'
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCity, setSelectedCity] = useState('Maharashtra');
-  const [graphData, setGraphData] = useState(FALLBACK_SEED_GRAPH);
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [hasConstructedRoadmap, setHasConstructedRoadmap] = useState(false);
-  const [completedNodes, setCompletedNodes] = useState(() => {
-    try {
-      const saved = localStorage.getItem('vertexa_completed_nodes');
-      return saved ? new Set(JSON.parse(saved)) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
-  const [questionnaireState, setQuestionnaireState] = useState(() => {
-    try {
-      const saved = localStorage.getItem('vertexa_plot_questionnaire');
-      return saved ? JSON.parse(saved) : {
-        constructionType: 'RESIDENTIAL',
-        customConstructionType: '',
-        mixedUseComponents: [],
-        jurisdiction: 'Pune',
-        plotArea: 200,
-        buildingHeight: 8.5,
-        roadWidth: 9.0,
-        treesAffected: 0,
-        heritageZone: false,
-        airportZone: false,
-        ecoSensitiveZone: false,
-        hasHighTensionLine: false
-      };
-    } catch {
-      return {
-        constructionType: 'RESIDENTIAL',
-        customConstructionType: '',
-        mixedUseComponents: [],
-        jurisdiction: 'Pune',
-        plotArea: 200,
-        buildingHeight: 8.5,
-        roadWidth: 9.0,
-        treesAffected: 0,
-        heritageZone: false,
-        airportZone: false,
-        ecoSensitiveZone: false,
-        hasHighTensionLine: false
-      };
-    }
-  });
+  // 1. Controlled Hydration / Initial State Recovery
+  const initialSession = useMemo(() => loadActiveSession(FALLBACK_SEED_GRAPH), []);
+
+  const [currentView, setCurrentView] = useState(() => initialSession.currentView);
+  const [searchQuery, setSearchQuery] = useState(() => initialSession.searchQuery);
+  const [selectedCity, setSelectedCity] = useState(() => initialSession.selectedCity);
+  const [graphData, setGraphData] = useState(() => initialSession.graphData || FALLBACK_SEED_GRAPH);
+  const [selectedNode, setSelectedNode] = useState(() => initialSession.selectedNode);
+  const [hasConstructedRoadmap, setHasConstructedRoadmap] = useState(() => initialSession.hasConstructedRoadmap);
+  const [completedNodes, setCompletedNodes] = useState(() => initialSession.completedNodes);
+  const [questionnaireState, setQuestionnaireState] = useState(() => initialSession.questionnaireState);
+  const [lockedTypology, setLockedTypology] = useState(() => initialSession.lockedTypology);
+  const [sourceQuery, setSourceQuery] = useState(() => initialSession.sourceQuery);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => initialSession.isSidebarOpen);
 
   const [loading, setLoading] = useState(false);
   const [isJargonModalOpen, setIsJargonModalOpen] = useState(false);
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [scopeFeedback, setScopeFeedback] = useState(null);
-  const [lockedTypology, setLockedTypology] = useState(null);
-  const [sourceQuery, setSourceQuery] = useState('');
 
-  // Sync completedNodes to localStorage
+  // 2. Reactive Active-Session Persistence (Saves state whenever meaningful roadmap progress changes)
   useEffect(() => {
-    try {
-      localStorage.setItem('vertexa_completed_nodes', JSON.stringify(Array.from(completedNodes)));
-    } catch (e) {
-      console.warn('Failed to persist completed nodes to localStorage:', e);
-    }
-  }, [completedNodes]);
-
-  // Sync questionnaire state to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('vertexa_plot_questionnaire', JSON.stringify(questionnaireState));
-    } catch (e) {
-      console.warn('Failed to persist questionnaire state to localStorage:', e);
-    }
-  }, [questionnaireState]);
+    saveActiveSession({
+      currentView,
+      hasConstructedRoadmap,
+      searchQuery,
+      selectedCity,
+      lockedTypology,
+      sourceQuery,
+      isSidebarOpen,
+      questionnaireState,
+      graphData,
+      completedNodes,
+      selectedNode
+    });
+  }, [
+    currentView,
+    hasConstructedRoadmap,
+    searchQuery,
+    selectedCity,
+    lockedTypology,
+    sourceQuery,
+    isSidebarOpen,
+    questionnaireState,
+    graphData,
+    completedNodes,
+    selectedNode
+  ]);
 
   // Fetch roadmap from backend API
   const fetchRoadmap = useCallback(async (query, city, customQuestionnaire = null) => {
@@ -490,12 +465,18 @@ export default function App() {
         }
       } else {
         setGraphData(FALLBACK_SEED_GRAPH);
+        if (FALLBACK_SEED_GRAPH.nodes && FALLBACK_SEED_GRAPH.nodes.length > 0) {
+          setSelectedNode(FALLBACK_SEED_GRAPH.nodes[0]);
+        }
       }
       setHasConstructedRoadmap(true);
       setCurrentView('roadmap');
     } catch (err) {
       console.warn('[Network/API Fallback] Using offline statutory seed graph:', err.message);
       setGraphData(FALLBACK_SEED_GRAPH);
+      if (FALLBACK_SEED_GRAPH.nodes && FALLBACK_SEED_GRAPH.nodes.length > 0) {
+        setSelectedNode(FALLBACK_SEED_GRAPH.nodes[0]);
+      }
       setHasConstructedRoadmap(true);
       setCurrentView('roadmap');
     } finally {
@@ -564,17 +545,15 @@ export default function App() {
   };
 
   const handleQuestionnaireSubmit = (formData) => {
-    // Reset completed progress for a newly constructed roadmap
+    // 1. Reset completed progress for a newly constructed roadmap
     setCompletedNodes(new Set());
-    try {
-      localStorage.removeItem('vertexa_completed_nodes');
-    } catch (e) {
-      console.warn('Failed to clear completed nodes storage:', e);
-    }
 
+    // 2. Set new questionnaire & city
     setQuestionnaireState(formData);
     setSelectedCity(formData.jurisdiction);
     setIsQuestionnaireOpen(false);
+
+    // 3. Fetch/generate new tailored roadmap
     fetchRoadmap(
       searchQuery || `${formData.constructionType || 'Building'} permission in ${formData.jurisdiction}`,
       formData.jurisdiction,
