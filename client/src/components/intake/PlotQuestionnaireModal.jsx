@@ -13,7 +13,8 @@ import {
   Zap,
   HelpCircle,
   CheckCircle2,
-  Flame
+  Flame,
+  Lock
 } from 'lucide-react';
 
 const MAHARASHTRA_JURISDICTIONS = [
@@ -43,7 +44,9 @@ export default function PlotQuestionnaireModal({
   onClose,
   initialValues = {},
   onSubmitQuestionnaire,
-  loading = false
+  loading = false,
+  lockedTypology = null,
+  sourceQuery = ''
 }) {
   const [formData, setFormData] = useState(() => ({
     constructionType: initialValues.constructionType || 'RESIDENTIAL',
@@ -134,28 +137,47 @@ export default function PlotQuestionnaireModal({
           
           {/* Section 1: Project Typology */}
           <div>
-            <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <Building2 className="w-4 h-4" />
-              1. Project & Construction Typology
-            </h3>
+            <div className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
+              <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Building2 className="w-4 h-4" />
+                1. Project & Construction Typology
+              </h3>
+              {lockedTypology && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-950/90 text-indigo-300 border border-indigo-800/80 text-[11px] font-semibold">
+                  <Lock className="w-3 h-3 text-indigo-400" />
+                  Typology locked to <span className="text-white font-bold">{CONSTRUCTION_TYPES.find(c => c.id === lockedTypology)?.label || lockedTypology}</span> by search query
+                </span>
+              )}
+            </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
               {CONSTRUCTION_TYPES.map((t) => {
                 const isSelected = formData.constructionType === t.id;
+                const isLockedOut = Boolean(lockedTypology && t.id !== lockedTypology);
+
                 return (
                   <button
                     key={t.id}
                     type="button"
-                    onClick={() => setFormData({ ...formData, constructionType: t.id })}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    disabled={isLockedOut}
+                    onClick={() => {
+                      if (!isLockedOut) {
+                        setFormData({ ...formData, constructionType: t.id });
+                      }
+                    }}
+                    className={`p-3 rounded-xl border text-left transition-all ${
                       isSelected
-                        ? 'bg-indigo-950/80 border-indigo-500 ring-1 ring-indigo-500/50 shadow-md shadow-indigo-950/40 text-white'
-                        : 'bg-slate-850/80 border-slate-750 text-slate-300 hover:border-slate-650 hover:bg-slate-800'
+                        ? 'bg-indigo-950/80 border-indigo-500 ring-1 ring-indigo-500/50 shadow-md shadow-indigo-950/40 text-white cursor-default'
+                        : isLockedOut
+                        ? 'bg-slate-900/30 border-slate-800/40 text-slate-500 opacity-40 cursor-not-allowed select-none'
+                        : 'bg-slate-850/80 border-slate-750 text-slate-300 hover:border-slate-650 hover:bg-slate-800 cursor-pointer'
                     }`}
+                    title={isLockedOut ? `Typology locked to ${lockedTypology} for this query: "${sourceQuery || lockedTypology}"` : t.desc}
                   >
                     <div className="flex items-center justify-between gap-1 mb-1">
                       <span className="text-xs font-bold">{t.label}</span>
                       {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
+                      {isLockedOut && <Lock className="w-3 h-3 text-slate-500 shrink-0" />}
                     </div>
                     <p className="text-[10px] text-slate-400 line-clamp-2 leading-snug">
                       {t.desc}

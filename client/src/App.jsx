@@ -445,6 +445,8 @@ export default function App() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [scopeFeedback, setScopeFeedback] = useState(null);
+  const [lockedTypology, setLockedTypology] = useState(null);
+  const [sourceQuery, setSourceQuery] = useState('');
 
   // Sync completedNodes to localStorage
   useEffect(() => {
@@ -530,6 +532,11 @@ export default function App() {
     const updatedDraft = { ...questionnaireState };
     if (classification.constructionType) {
       updatedDraft.constructionType = classification.constructionType;
+      setLockedTypology(classification.constructionType);
+      setSourceQuery(q);
+    } else {
+      setLockedTypology(null);
+      setSourceQuery('');
     }
 
     if (/mumbai/i.test(q)) updatedDraft.jurisdiction = 'Mumbai';
@@ -869,6 +876,8 @@ export default function App() {
         initialValues={questionnaireState}
         onSubmitQuestionnaire={handleQuestionnaireSubmit}
         loading={loading}
+        lockedTypology={lockedTypology}
+        sourceQuery={sourceQuery}
       />
 
       {/* Jargon Buster Glossary Modal */}
