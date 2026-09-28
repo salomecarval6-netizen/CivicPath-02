@@ -258,7 +258,135 @@ const FALLBACK_SEED_GRAPH = {
     { id: "e_hydraulic_cc", source: "node_hydraulic_noc", target: "node_cc", label: "Drainage compliance submitted" },
     { id: "e_cc_plinth", source: "node_cc", target: "node_plinth_check", label: "Excavation to Plinth height" },
     { id: "e_plinth_oc", source: "node_plinth_check", target: "node_oc", label: "Superstructure slabs & final finishes" }
-  ]
+  ],
+  eligibility: {
+    constructionType: "RESIDENTIAL",
+    jurisdiction: "Urban Local Bodies across Maharashtra",
+    plotArea: 200,
+    buildingHeight: 8.5,
+    roadWidth: 9.0,
+    applicable: [
+      {
+        id: "base_title_record",
+        name: "Land Title & 7/12 / CTS Property Card",
+        status: "APPLIES",
+        reason: "Mandatory under UDCPR 2020 Reg 2.2.3(a) & MLRC 1966 Sec 148 for Residential development to prove unencumbered ownership.",
+        statutoryRef: "UDCPR 2020 Reg 2.2.3(a)",
+        nodeKey: "title"
+      },
+      {
+        id: "base_cadastral_demarcation",
+        name: "Cadastral Demarcation (Kayam Mojani)",
+        status: "APPLIES",
+        reason: "Mandatory under UDCPR 2020 Reg 2.2.3(b) & MLRC 1966 Sec 135 to verify physical plot boundaries, road widening line, and statutory setbacks.",
+        statutoryRef: "UDCPR 2020 Reg 2.2.3(b)",
+        nodeKey: "mojani"
+      },
+      {
+        id: "base_property_tax",
+        name: "Municipal Property Tax No-Dues NOC",
+        status: "APPLIES",
+        reason: "Mandatory proof under MMCA Sec 129 / UDCPR Reg 2.2.3(f) that all municipal open land taxes are cleared.",
+        statutoryRef: "UDCPR 2020 Reg 2.2.3(f)",
+        nodeKey: "tax_noc"
+      },
+      {
+        id: "base_autodcr_scrutiny",
+        name: "Architect CAD Plan Submission & Automated Scrutiny (MahaBPAMS / MCGM AutoDCR)",
+        status: "APPLIES",
+        reason: "Statutory automated verification of FSI, ground coverage, ventilation, parking norms, and open spaces under UDCPR 2020.",
+        statutoryRef: "UDCPR 2020 Reg 2.2.1 & 2.2.4",
+        nodeKey: "autodcr"
+      },
+      {
+        id: "base_site_inspection",
+        name: "Assistant Town Planner (ATP) Site Inspection",
+        status: "APPLIES",
+        reason: "Mandatory ground verification by planning authority before granting IOD / Development Sanction.",
+        statutoryRef: "UDCPR 2020 Reg 2.4 & RTS Act",
+        nodeKey: "site_inspection"
+      },
+      {
+        id: "base_iod_sanction",
+        name: "Development Sanction / Conditional Sanction (Intimation of Disapproval - IOD in Mumbai)",
+        status: "APPLIES",
+        reason: "Statutory conditional planning sanction under Section 45 of MRTP Act 1966.",
+        statutoryRef: "MRTP Act 1966 Sec 45",
+        nodeKey: "iod"
+      },
+      {
+        id: "hydraulic_noc",
+        name: "Hydraulic & Stormwater Drainage Sanction",
+        status: "APPLIES",
+        reason: "Mandatory under UDCPR Reg 2.2.5(d) for municipal water and stormwater network connectivity.",
+        statutoryRef: "UDCPR 2020 Reg 2.2.5(d)",
+        nodeKey: "hydraulic_noc"
+      },
+      {
+        id: "base_cc_permit",
+        name: "Commencement Certificate (CC) — Plinth Level",
+        status: "APPLIES",
+        reason: "Statutory permit under UDCPR 2020 Reg 2.6 unlocking physical excavation.",
+        statutoryRef: "UDCPR 2020 Reg 2.6",
+        nodeKey: "cc"
+      },
+      {
+        id: "base_plinth_check",
+        name: "Mandatory Plinth Inspection & Superstructure CC",
+        status: "APPLIES",
+        reason: "Statutory inspection halt under UDCPR Reg 2.8.4 before casting upper slabs.",
+        statutoryRef: "UDCPR 2020 Reg 2.8.4",
+        nodeKey: "plinth_check"
+      },
+      {
+        id: "base_oc_permit",
+        name: "Building Completion & Final Occupancy Certificate (OC)",
+        status: "APPLIES",
+        reason: "Statutory occupancy authorization under UDCPR 2020 Reg 2.10 unlocking legal utilities.",
+        statutoryRef: "UDCPR 2020 Reg 2.10",
+        nodeKey: "oc"
+      }
+    ],
+    exempt: [
+      {
+        id: "fire_noc",
+        name: "Chief Fire Officer (CFO) Fire NOC",
+        status: "EXEMPT",
+        reason: "Exempt under UDCPR 2020 Reg 1.3(53) for low-rise structures (Height 8.5m < 15.0m threshold).",
+        statutoryRef: "UDCPR 2020 Reg 1.3(53)"
+      },
+      {
+        id: "tree_authority_noc",
+        name: "Tree Authority Felling / Preservation Clearance",
+        status: "EXEMPT",
+        reason: "Exempt: No existing trees (0) reported on plot requiring felling or transplanting.",
+        statutoryRef: "Maharashtra Tree Act 1975"
+      },
+      {
+        id: "heritage_committee_noc",
+        name: "Mumbai/Pune Heritage Conservation Committee NOC",
+        status: "EXEMPT",
+        reason: "Exempt: Plot is not situated within a notified heritage precinct or listed Grade I/II/III structure.",
+        statutoryRef: "UDCPR 2020 Reg 5.3"
+      },
+      {
+        id: "moef_ec",
+        name: "State Environmental Impact Assessment Authority (SEIAA) Clearance",
+        status: "EXEMPT",
+        reason: "Exempt: Built-up area is below EIA 2006 threshold of 20,000 sq.m.",
+        statutoryRef: "EIA Notification 2006"
+      }
+    ],
+    uncertain: [
+      {
+        id: "airport_height_noc",
+        name: "Airports Authority of India (AAI NOCAS) Clearance",
+        status: "REQUIRES_VERIFICATION",
+        reason: "Requires CCZM verification: Verify exact plot coordinates against the Color Coded Zoning Map for civil aviation funnel restrictions.",
+        statutoryRef: "GSR 751(E) / UDCPR 2020"
+      }
+    ]
+  }
 };
 
 export default function App() {

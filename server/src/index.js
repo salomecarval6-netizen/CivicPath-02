@@ -47,7 +47,7 @@ app.get('/api/health', (req, res) => {
 
 // Helper for resilient Gemini calls with multi-model fallback & extended timeout
 async function generateWithGemini(ai, prompt, systemInstruction, timeoutMs = 18000) {
-  const models = ['gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.5-flash'];
+  const models = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.5-flash'];
   let lastErr = null;
 
   for (const model of models) {
@@ -280,6 +280,35 @@ app.get('/api/link-status', async (req, res) => {
 });
 
 // 6. Dynamic Civic Jargon / Acronym Explainer (Gemini AI + Heuristics)
+const KNOWN_CIVIC_DICTIONARY = [
+  '7/12', 'satbara', '8a', 'property card', 'cts', 'ctso', 'mojani', 'kayam mojani', 'tilr',
+  'na order', 'autodcr', 'predcr', 'mahabpams', 'iod', 'cc', 'plinth', 'plinth checking',
+  'oc', 'occupancy', 'bcc', 'fsi', 'tdr', 'setback', 'marginal distance', 'cfo', 'fire noc',
+  'aai', 'nocas', 'tree authority', 'tree noc', 'gumasta', 'fssai', 'trade license', 'rts',
+  'rts act', 'mrtp', 'mrtp act', 'udcpr', 'udcpr 2020', 'mlrc', 'crz', 'esz', 'ngt', 'rera',
+  'maharera', 'dp', 'tp', 'development plan', 'town planning', 'high tension', 'heritage',
+  'water noc', 'hydraulic', 'drainage', 'sewage', 'stamp duty', 'index ii', 'sro',
+  'commencement certificate', 'occupancy certificate', 'intimation of disapproval',
+  'encumbrance', 'survey number', 'gat number', 'gut number', 'gunthewari', 'layout sanction',
+  'deemed conveyance', 'mutation entry', 'ferfar', 'chawl', 'gaothan', 'zone certificate'
+];
+
+function isLikelyCivicTerm(term) {
+  const normalized = term.trim().toLowerCase();
+  if (normalized.length < 2) return false;
+  if (['abc', 'xyz', 'test', 'asdf', 'qwerty', 'foo', 'bar', 'aaa', 'bbb', 'ccc', 'temp', 'dummy', 'sample'].includes(normalized)) {
+    return false;
+  }
+  if (KNOWN_CIVIC_DICTIONARY.some(k => normalized === k || normalized.includes(k) || k.includes(normalized))) {
+    return true;
+  }
+  const civicTokens = ['noc', 'order', 'act', 'rule', 'certificate', 'sanction', 'tax', 'plan', 'clearance', 'license', 'permit', 'extract', 'survey', 'zoning', 'bylaw', 'fsi', 'tdr', 'dcr', 'plinth', 'height', 'fire'];
+  if (civicTokens.some(t => normalized.includes(t))) {
+    return true;
+  }
+  return false;
+}
+
 app.post('/api/explain-term', async (req, res) => {
   const { term = '', context = '' } = req.body;
   if (!term || typeof term !== 'string') {
@@ -291,17 +320,27 @@ app.post('/api/explain-term', async (req, res) => {
   if (isKeyValid) {
     try {
       const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-      const prompt = `Explain the following statutory/municipal administrative term or legal acronym used in Maharashtra residential building permission (UDCPR 2020 / MRTP Act 1966):
-Term: "${term}"
-Context: "${context || 'Maharashtra Urban Local Body / Town Planning Dept'}"
+      const prompt = `You are an expert in Maharashtra municipal administrative law, revenue records, town planning, and UDCPR 2020 / MRTP Act 1966.
 
-Return a valid JSON object matching:
+Analyze the user's query: "${term}" (Context: "${context || 'Maharashtra Urban Local Body / Town Planning'}")
+
+TASK: Determine whether "${term}" is a genuine statutory, municipal, urban planning, revenue, legal acronym, or building permission term in Maharashtra or India.
+
+If "${term}" is invalid, random gibberish, meaningless letters (such as "abc", "xyz", "asdf", "test", "qwerty", or words unrelated to civic/regulatory/municipal governance), return JSON:
 {
+  "isValid": false,
   "term": "${term}",
-  "category": "Land Title | PreDCR / Architectural | Departmental NOC | Construction Phase | Habitation",
+  "message": "'${term}' is not recognized as a valid statutory, municipal, or regulatory term."
+}
+
+If "${term}" IS a valid civic/statutory/municipal/legal term or acronym, return JSON:
+{
+  "isValid": true,
+  "term": "${term}",
+  "category": "Land Title | Architectural & PreDCR | Departmental NOC | Construction Phase | Habitation | Trade & Licensing | Revenue & Survey",
   "shortDef": "Concise 3-6 word definition",
-  "explanation": "Clear plain-language explanation of what this term means, why it is required by government authorities under UDCPR 2020, and what citizens need to do.",
-  "statutoryAct": "Relevant legal Act/Regulation (e.g., UDCPR 2020 Reg 2.2, MRTP Act 1966 Sec 45, Maharashtra Tree Act 1975)"
+  "explanation": "Clear plain-language explanation of what this term means, why it is required by government authorities under Maharashtra regulations, and what citizens need to do.",
+  "statutoryAct": "Relevant legal Act/Regulation (e.g., UDCPR 2020 Reg 2.2, MRTP Act 1966 Sec 45, Maharashtra Land Revenue Code 1966)"
 }`;
 
       const aiResult = await generateWithGemini(
@@ -317,12 +356,21 @@ Return a valid JSON object matching:
     }
   }
 
-  // Graceful statutory heuristic fallback
+  // Graceful statutory heuristic check
+  if (!isLikelyCivicTerm(term)) {
+    return res.status(200).json({
+      isValid: false,
+      term: term,
+      message: `"${term}" is not recognized as a valid statutory, municipal, or UDCPR regulatory term.`
+    });
+  }
+
   return res.status(200).json({
+    isValid: true,
     term: term,
     category: 'Civic Regulatory Term',
     shortDef: 'Statutory Administrative Requirement',
-    explanation: `Official municipal procedure or clearance document required under Maharashtra UDCPR 2020 / MRTP Act 1966.`,
+    explanation: `Official municipal procedure or clearance document required under Maharashtra UDCPR 2020 / MRTP Act 1966 for ${term}.`,
     statutoryAct: 'Maharashtra UDCPR 2020 & MRTP Act 1966'
   });
 });

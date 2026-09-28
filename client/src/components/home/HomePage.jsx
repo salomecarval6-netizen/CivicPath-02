@@ -304,15 +304,24 @@ export default function HomePage({
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-850/80 border border-slate-750 space-y-1.5">
-              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50">
-                Step 6
-              </span>
+            <button
+              type="button"
+              onClick={onOpenJargonBuster}
+              className="p-4 rounded-xl bg-slate-850/80 hover:bg-slate-800 border border-slate-750 hover:border-indigo-500/50 space-y-1.5 text-left transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50">
+                  Step 6
+                </span>
+                <span className="text-[11px] text-indigo-400 group-hover:text-indigo-300 font-semibold flex items-center gap-1">
+                  Open Jargon Buster →
+                </span>
+              </div>
               <h4 className="text-xs font-bold text-slate-200">Use Dossier & Jargon Tools</h4>
               <p className="text-[11px] text-slate-400">
                 Download your Master Document Kit or open the Jargon Buster glossary for simple explanations of civic terms (7/12, IOD, CC, OC).
               </p>
-            </div>
+            </button>
           </div>
         </div>
 
@@ -334,25 +343,39 @@ export default function HomePage({
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-              <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-emerald-400" />
-                Plot Questionnaire
-              </h3>
+            <button
+              type="button"
+              onClick={onOpenQuestionnaire}
+              className="p-4 rounded-xl bg-slate-900 hover:bg-slate-850/90 border border-slate-800 hover:border-emerald-500/50 space-y-2 text-left transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                  <Sliders className="w-4 h-4 text-emerald-400" />
+                  Plot Questionnaire
+                </h3>
+                <span className="text-[10px] text-emerald-400 font-semibold group-hover:underline">Configure →</span>
+              </div>
               <p className="text-[11px] text-slate-400">
                 Structured parameter intake capturing building height, road width, and environmental zones for precise rule evaluation.
               </p>
-            </div>
+            </button>
 
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-              <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-blue-400" />
-                Authority Applicability Engine
-              </h3>
+            <button
+              type="button"
+              onClick={onOpenQuestionnaire}
+              className="p-4 rounded-xl bg-slate-900 hover:bg-slate-850/90 border border-slate-800 hover:border-blue-500/50 space-y-2 text-left transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-blue-400" />
+                  Authority Applicability Engine
+                </h3>
+                <span className="text-[10px] text-blue-400 font-semibold group-hover:underline">Evaluate Rules →</span>
+              </div>
               <p className="text-[11px] text-slate-400">
                 Three-state classification clearly distinguishing APPLIES, EXEMPT, and REQUIRES VERIFICATION with statutory references.
               </p>
-            </div>
+            </button>
 
             <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
               <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
@@ -374,15 +397,22 @@ export default function HomePage({
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-              <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-purple-400" />
-                Civic Jargon Buster
-              </h3>
+            <button
+              type="button"
+              onClick={onOpenJargonBuster}
+              className="p-4 rounded-xl bg-slate-900 hover:bg-slate-850/90 border border-slate-800 hover:border-purple-500/50 space-y-2 text-left transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-purple-400" />
+                  Civic Jargon Buster
+                </h3>
+                <span className="text-[10px] text-purple-400 font-semibold group-hover:underline">Search Terms →</span>
+              </div>
               <p className="text-[11px] text-slate-400">
                 Searchable lexicon explaining complex Marathi and English municipal terms like Kayam Mojani, PreDCR, IOD, CC, and OC.
               </p>
-            </div>
+            </button>
           </div>
         </div>
 
