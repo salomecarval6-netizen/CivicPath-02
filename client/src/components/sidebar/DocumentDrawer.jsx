@@ -260,44 +260,44 @@ export default function DocumentDrawer({
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-slate-900/90 rounded-xl p-3 border border-slate-800/80">
-                <div className="flex items-center gap-1.5 text-slate-400 text-[11px] mb-1">
+            <div className="grid grid-cols-2 gap-2.5 text-xs">
+              <div className="group bg-slate-900/90 hover:bg-slate-850/95 rounded-xl p-3 border border-slate-800/80 hover:border-blue-500/40 transition-all shadow-sm">
+                <div className="flex items-center gap-1.5 text-slate-400 text-[11px] mb-1 group-hover:text-blue-300 transition-colors">
                   <Clock className="w-3.5 h-3.5 text-blue-400" />
-                  Total Duration
+                  <span>Total Duration</span>
                 </div>
-                <div className="text-base font-bold text-white">
-                  ~{metrics.totalDays} Days
+                <div className="text-base font-extrabold text-white font-mono">
+                  ~{metrics.totalDays} <span className="text-xs font-normal text-slate-400 font-sans">Days</span>
                 </div>
               </div>
 
-              <div className="bg-slate-900/90 rounded-xl p-3 border border-slate-800/80">
-                <div className="flex items-center gap-1.5 text-slate-400 text-[11px] mb-1">
+              <div className="group bg-slate-900/90 hover:bg-slate-850/95 rounded-xl p-3 border border-slate-800/80 hover:border-emerald-500/40 transition-all shadow-sm">
+                <div className="flex items-center gap-1.5 text-slate-400 text-[11px] mb-1 group-hover:text-emerald-300 transition-colors">
                   <IndianRupee className="w-3.5 h-3.5 text-emerald-400" />
-                  Statutory Fees
+                  <span>Statutory Fees</span>
                 </div>
-                <div className="text-base font-bold text-emerald-400">
+                <div className="text-base font-extrabold text-emerald-400 font-mono">
                   ₹{Number(metrics.totalCost).toLocaleString('en-IN')}
                 </div>
               </div>
 
-              <div className="bg-slate-900/90 rounded-xl p-3 border border-slate-800/80">
-                <div className="flex items-center gap-1.5 text-slate-400 text-[11px] mb-1">
+              <div className="group bg-slate-900/90 hover:bg-slate-850/95 rounded-xl p-3 border border-slate-800/80 hover:border-amber-500/40 transition-all shadow-sm">
+                <div className="flex items-center gap-1.5 text-slate-400 text-[11px] mb-1 group-hover:text-amber-300 transition-colors">
                   <FileText className="w-3.5 h-3.5 text-amber-400" />
-                  Total Forms
+                  <span>Total Forms</span>
                 </div>
-                <div className="text-base font-bold text-white">
-                  {metrics.totalDocs} Clearances
+                <div className="text-base font-extrabold text-white font-mono">
+                  {metrics.totalDocs} <span className="text-xs font-normal text-slate-400 font-sans">Clearances</span>
                 </div>
               </div>
 
-              <div className="bg-slate-900/90 rounded-xl p-3 border border-slate-800/80">
-                <div className="flex items-center gap-1.5 text-slate-400 text-[11px] mb-1">
+              <div className="group bg-slate-900/90 hover:bg-slate-850/95 rounded-xl p-3 border border-slate-800/80 hover:border-rose-500/40 transition-all shadow-sm">
+                <div className="flex items-center gap-1.5 text-slate-400 text-[11px] mb-1 group-hover:text-rose-300 transition-colors">
                   <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-                  Bottlenecks
+                  <span>Bottlenecks</span>
                 </div>
-                <div className="text-base font-bold text-rose-400">
-                  {metrics.bottlenecks} Critical
+                <div className="text-base font-extrabold text-rose-400 font-mono">
+                  {metrics.bottlenecks} <span className="text-xs font-normal text-rose-300 font-sans">Critical</span>
                 </div>
               </div>
             </div>

@@ -29,6 +29,7 @@ import RoadmapCanvas from './components/graph/RoadmapCanvas';
 import DocumentDrawer from './components/sidebar/DocumentDrawer';
 import JargonBusterModal from './components/common/JargonBusterModal';
 import PlotQuestionnaireModal from './components/intake/PlotQuestionnaireModal';
+import CommandPaletteModal from './components/common/CommandPaletteModal';
 import HomePage from './components/home/HomePage';
 import { API_ENDPOINTS } from './config/api';
 import { classifyRequirementScope } from './utils/scopeClassifier';
@@ -409,8 +410,21 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [isJargonModalOpen, setIsJargonModalOpen] = useState(false);
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [scopeFeedback, setScopeFeedback] = useState(null);
+
+  // Global ⌘K / Ctrl+K keyboard shortcut for Command Palette
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   // 2. Reactive Active-Session Persistence (Saves state whenever meaningful roadmap progress changes)
   useEffect(() => {
@@ -663,14 +677,28 @@ export default function App() {
           </button>
         </form>
 
-        {/* Right Actions: Navigation, Plot Questionnaire, Jargon Buster & Mobile Drawer Toggle */}
+        {/* Right Actions: Command Palette, Navigation, Plot Questionnaire, Jargon Buster & Mobile Drawer Toggle */}
         <div className="flex items-center gap-2">
+          {/* Quick Command Engine (⌘K / Ctrl+K) */}
+          <button
+            type="button"
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="inline-flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-750 active:scale-95 text-slate-200 border border-slate-700/80 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer group"
+            title="Open Command Engine (⌘K or Ctrl+K)"
+          >
+            <Search className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:inline">Commands</span>
+            <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-bold bg-slate-900 border border-slate-750 text-indigo-300 rounded-md">
+              <span>⌘</span><span>K</span>
+            </kbd>
+          </button>
+
           {/* Home / Roadmap View Switcher */}
           {currentView === 'roadmap' ? (
             <button
               type="button"
               onClick={() => setCurrentView('home')}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-750 active:scale-95 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer"
               title="Return to Home screen"
             >
               <Home className="w-4 h-4 text-indigo-400" />
@@ -680,7 +708,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setCurrentView('roadmap')}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-950/90 hover:bg-indigo-900 active:scale-95 text-indigo-300 border border-indigo-800 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer"
               title="View your active generated roadmap"
             >
               <Compass className="w-4 h-4 text-indigo-400" />
@@ -692,7 +720,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => setIsQuestionnaireOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-950/80 hover:bg-indigo-900 text-indigo-200 border border-indigo-800/80 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-950/80 hover:bg-indigo-900 active:scale-95 text-indigo-200 border border-indigo-800/80 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
             title="Configure plot parameters to calculate applicable NOCs"
           >
             <Sliders className="w-4 h-4 text-indigo-400" />
@@ -703,7 +731,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => setIsJargonModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-750 active:scale-95 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer"
             title="Open Civic Jargon Buster glossary"
           >
             <BookOpen className="w-4 h-4 text-indigo-400" />
@@ -758,6 +786,11 @@ export default function App() {
               <div className="hidden sm:flex items-center gap-1 text-slate-300 text-[11px] px-2 py-0.5 rounded bg-indigo-950/60 border border-indigo-800/50">
                 <Building2 className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Type: <strong className="text-indigo-300 uppercase">{graphData?.constructionType || questionnaireState?.constructionType || 'RESIDENTIAL'}</strong></span>
+              </div>
+              {/* Telemetry Live Engine Status */}
+              <div className="hidden lg:flex items-center gap-2 text-[10px] font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-900/90 border border-slate-800">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>MahaBPAMS Scrutiny: Online</span>
               </div>
             </div>
 
@@ -864,6 +897,32 @@ export default function App() {
         isOpen={isJargonModalOpen}
         onClose={() => setIsJargonModalOpen(false)}
         graphData={graphData}
+      />
+
+      {/* Global Command Palette Modal */}
+      <CommandPaletteModal
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        graphData={graphData}
+        completedNodes={completedNodes}
+        onSelectNode={handleSelectNode}
+        onOpenQuestionnaire={() => setIsQuestionnaireOpen(true)}
+        onOpenJargonBuster={() => setIsJargonModalOpen(true)}
+        onNavigateHome={() => setCurrentView('home')}
+        onNavigateRoadmap={() => setCurrentView('roadmap')}
+        onSelectCity={(city) => {
+          setSelectedCity(city);
+          handleStartConstruct(city);
+        }}
+        onSelectTypology={(typ) => {
+          const updated = { ...questionnaireState, constructionType: typ };
+          setQuestionnaireState(updated);
+          fetchRoadmap(
+            searchQuery || `${typ} building permission in ${selectedCity}`,
+            selectedCity,
+            updated
+          );
+        }}
       />
     </div>
   );

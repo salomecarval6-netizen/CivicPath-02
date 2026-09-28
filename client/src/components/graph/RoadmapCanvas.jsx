@@ -192,7 +192,7 @@ function InnerRoadmapCanvas({
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [activeStageFilter, setActiveStageFilter] = useState(null);
 
-  const { fitView, setCenter, zoomTo } = useReactFlow();
+  const { fitView, setCenter, zoomTo, zoomIn, zoomOut } = useReactFlow();
 
   // Toggle node completion status
   const handleStatusChange = useCallback((nodeId, nextStatus) => {
@@ -415,17 +415,17 @@ function InnerRoadmapCanvas({
             className="!bg-slate-900/90 !border-slate-800 !rounded-xl !shadow-2xl hidden md:block"
           />
 
-          {/* Top Left: Interactive Viewport Tools & Quick Focus */}
-          <Panel position="top-left" className="m-3 flex items-center gap-2">
+          {/* Top Left: Blueprint Tag & Progress Meter */}
+          <Panel position="top-left" className="m-3 flex flex-wrap items-center gap-2 pointer-events-auto">
             {/* Progress Badge */}
-            <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-800 shadow-xl text-slate-100">
+            <div className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-800 shadow-xl text-slate-100">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <span className="text-xs font-bold">
                   {stats.completedCount} / {stats.total} Done ({stats.progressPercent}%)
                 </span>
               </div>
-              <div className="w-20 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-750">
+              <div className="w-16 sm:w-20 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-750">
                 <div
                   className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-300 rounded-full"
                   style={{ width: `${stats.progressPercent}%` }}
@@ -433,72 +433,103 @@ function InnerRoadmapCanvas({
               </div>
             </div>
 
-            {/* Quick Focus on Next Actionable Step */}
-            <button
-              type="button"
-              onClick={handleFocusActionable}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all"
-              title="Center camera on the next actionable step"
-            >
-              <Target className="w-3.5 h-3.5" />
-              <span>Next Step</span>
-            </button>
-
-            {/* 100% Zoom Reset */}
-            <button
-              type="button"
-              onClick={handleResetZoom}
-              className="px-3 py-2 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold shadow-xl transition-all"
-              title="Reset view to 100% scale"
-            >
-              100% Zoom
-            </button>
-
-            {/* Orientation Switcher */}
-            <button
-              type="button"
-              onClick={() => setOrientation((prev) => (prev === 'TB' ? 'LR' : 'TB'))}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-semibold shadow-xl transition-all"
-              title="Toggle between Vertical Hierarchy and Horizontal Pipeline"
-            >
-              {orientation === 'TB' ? (
-                <>
-                  <ArrowRightLeft className="w-3.5 h-3.5 text-indigo-400" />
-                  <span className="hidden sm:inline">Horizontal View</span>
-                </>
-              ) : (
-                <>
-                  <ArrowDownUp className="w-3.5 h-3.5 text-indigo-400" />
-                  <span className="hidden sm:inline">Vertical View</span>
-                </>
-              )}
-            </button>
-
-            {/* Fit Entire Map */}
-            <button
-              type="button"
-              onClick={() => fitView({ padding: 0.15, duration: 400 })}
-              className="p-2 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white shadow-xl transition-all"
-              title="Fit entire map in window"
-            >
-              <Maximize2 className="w-4 h-4 text-indigo-400" />
-            </button>
+            {/* Technical Blueprint Badge */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/80 backdrop-blur-md border border-slate-800/80 text-[10px] font-mono text-slate-400">
+              <span className="text-indigo-400 font-bold">FIG. 1.0</span>
+              <span className="text-slate-600">|</span>
+              <span>UDCPR 2020 DAG</span>
+            </div>
           </Panel>
 
-          {/* Bottom Center: Legend Panel */}
-          <Panel position="bottom-center" className="mb-3">
-            <div className="flex items-center gap-4 px-4 py-2 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-800 text-[11px] text-slate-300 shadow-xl">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-emerald-500/30" />
-                <span className="font-semibold">Completed</span>
+          {/* Bottom Center: Floating Glassmorphism Quick-Nav Dock */}
+          <Panel position="bottom-center" className="mb-4 z-20">
+            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl bg-slate-900/90 backdrop-blur-xl border border-slate-750 shadow-2xl text-slate-200">
+              {/* Next Actionable Step Trigger */}
+              <button
+                type="button"
+                onClick={handleFocusActionable}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+                title="Center camera on the next actionable step"
+              >
+                <Target className="w-3.5 h-3.5 animate-pulse" />
+                <span>Next Step</span>
+              </button>
+
+              <div className="h-4 w-px bg-slate-800 mx-0.5" />
+
+              {/* Layout Orientation Switcher */}
+              <button
+                type="button"
+                onClick={() => setOrientation((prev) => (prev === 'TB' ? 'LR' : 'TB'))}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 active:scale-95 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700/60 transition-all cursor-pointer"
+                title="Toggle between Vertical Hierarchy and Horizontal Pipeline"
+              >
+                {orientation === 'TB' ? (
+                  <>
+                    <ArrowRightLeft className="w-3.5 h-3.5 text-indigo-400" />
+                    <span className="hidden md:inline">Horizontal</span>
+                  </>
+                ) : (
+                  <>
+                    <ArrowDownUp className="w-3.5 h-3.5 text-indigo-400" />
+                    <span className="hidden md:inline">Vertical</span>
+                  </>
+                )}
+              </button>
+
+              <div className="h-4 w-px bg-slate-800 mx-0.5" />
+
+              {/* Zoom Controls Pill */}
+              <div className="flex items-center gap-0.5 bg-slate-950/70 border border-slate-800 rounded-xl p-0.5">
+                <button
+                  type="button"
+                  onClick={() => zoomOut({ duration: 300 })}
+                  className="p-1.5 rounded-lg hover:bg-slate-800 active:scale-90 text-slate-300 hover:text-white transition-all cursor-pointer"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetZoom}
+                  className="px-2 py-1 text-[11px] font-mono font-semibold text-slate-300 hover:text-indigo-300 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                  title="Reset to 100% Zoom"
+                >
+                  100%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => zoomIn({ duration: 300 })}
+                  className="p-1.5 rounded-lg hover:bg-slate-800 active:scale-90 text-slate-300 hover:text-white transition-all cursor-pointer"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 ring-2 ring-indigo-500/30" />
-                <span className="font-semibold">Ready for Action</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-600" />
-                <span className="font-medium text-slate-400">Prerequisites Locked</span>
+
+              {/* Fit View */}
+              <button
+                type="button"
+                onClick={() => fitView({ padding: 0.15, duration: 400 })}
+                className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 active:scale-90 text-slate-300 hover:text-white border border-slate-700/60 transition-all cursor-pointer"
+                title="Fit entire map in window"
+              >
+                <Maximize2 className="w-3.5 h-3.5 text-indigo-400" />
+              </button>
+
+              <div className="hidden lg:flex items-center gap-3 pl-2 border-l border-slate-800 text-[10px] text-slate-400">
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span>Done</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-indigo-400" />
+                  <span>Ready</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-slate-600" />
+                  <span>Locked</span>
+                </div>
               </div>
             </div>
           </Panel>
