@@ -107,13 +107,13 @@ export default function DocumentDrawer({
 
   const metrics = useMemo(() => {
     const totalDays =
-      graphData?.totalEstimatedDays ||
-      graphData?.nodes?.reduce((acc, n) => acc + (n.estimatedDays || 0), 0) ||
-      0;
+      graphData?.nodes && graphData.nodes.length > 0
+        ? graphData.nodes.reduce((acc, n) => acc + (n.estimatedDays || 0), 0)
+        : graphData?.totalEstimatedDays || 0;
     const totalCost =
-      graphData?.totalEstimatedCostINR ||
-      graphData?.nodes?.reduce((acc, n) => acc + (n.cost || 0), 0) ||
-      0;
+      graphData?.nodes && graphData.nodes.length > 0
+        ? graphData.nodes.reduce((acc, n) => acc + (n.cost || 0), 0)
+        : graphData?.totalEstimatedCostINR || 0;
     const totalDocs = masterDocList.length;
     const bottlenecks =
       graphData?.nodes?.filter((n) => n.isBottleneck)?.length || 0;
