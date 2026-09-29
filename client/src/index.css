@@ -56,6 +56,12 @@ html.dark, [data-theme="dark"] {
   ::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
   }
+
+  /* Form Select Options High Contrast */
+  select option {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+  }
 }
 
 /* View Transitions — Theme Toggle Effect (Chánh Đại Circle Blur Reference) */

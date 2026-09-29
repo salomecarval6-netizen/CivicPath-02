@@ -22,16 +22,8 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import ScrollFade from '../common/ScrollFade';
-
-const STATUTORY_AUTHORITY_LOGOS = [
-  { name: 'UDCPR 2020', role: 'Unified Development Control Rules', icon: Scale },
-  { name: 'MRTP Act 1966', role: 'Maharashtra Town Planning', icon: Landmark },
-  { name: 'Town Planning Dept', role: 'Cadastral & Zoning Scrutiny', icon: Building },
-  { name: 'TILR / Revenue', role: '7/12 & Kayam Mojani Survey', icon: FileSpreadsheet },
-  { name: 'CFO / Fire Authority', role: 'Life Safety Clearances', icon: Flame },
-  { name: 'Tree Authority', role: 'Green Preservation Clearances', icon: TreePine },
-  { name: 'Council of Architecture', role: 'Licensed Professional Scrutiny', icon: Compass }
-];
+import LogosCarousel from './LogosCarousel';
+import TextGenerateEffect from '../common/TextGenerateEffect';
 
 export default function ScrollLogosCarousel({
   onOpenQuestionnaire,
@@ -41,55 +33,52 @@ export default function ScrollLogosCarousel({
   const isStepVisible = (step) => activeStep >= step;
   const isCurrentStep = (step) => activeStep === step;
 
+  const [hasScrolledIntoView, setHasScrolledIntoView] = React.useState(false);
+  const sectionRef = React.useRef(null);
+
+  React.useEffect(() => {
+    // Clean fallback for prefers-reduced-motion
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setHasScrolledIntoView(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Only trigger when the top of the cards container enters the viewport
+        if (entry && entry.isIntersecting) {
+          setHasScrolledIntoView(true);
+          observer.disconnect(); // Fire once and keep visible
+        }
+      },
+      {
+        root: null,
+        threshold: 0.25, // Wait until 25% of the card section is visibly on screen
+        rootMargin: "0px 0px -50px 0px" // Prevents premature triggering before actual scroll
+      }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="space-y-12">
       {/* Visual Adaptation: Statutory Authority Logo Carousel Ribbon (Step 4) */}
       <div
         data-seq-step="4"
         className={clsx(
-          'space-y-3 transition-all duration-700 ease-out',
+          'transition-all duration-700 ease-out',
           isStepVisible(4)
             ? 'sequential-step-visible'
             : 'sequential-step-hidden',
           isCurrentStep(4) && 'sequential-glow-active'
         )}
       >
-        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
-          <span className="font-semibold uppercase tracking-wider text-[11px] text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Statutory Frameworks & Authority Standards
-          </span>
-          <span className="text-[11px] hidden sm:inline text-slate-500 dark:text-slate-400">
-            Compliant with Maharashtra Municipal Regulations
-          </span>
-        </div>
-
-        {/* Outer Carousel Container with Masked Edge Gradients */}
-        <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800/80 p-3 shadow-sm dark:shadow-inner">
-          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-slate-50 via-slate-50/60 to-transparent dark:from-slate-900 dark:via-slate-900/60 z-10" />
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-50 via-slate-50/60 to-transparent dark:from-slate-900 dark:via-slate-900/60 z-10" />
-
-          {/* Scrolling Ticker Track */}
-          <div className="flex gap-4 w-max animate-carousel-scroll hover:[animation-play-state:paused]">
-            {[...STATUTORY_AUTHORITY_LOGOS, ...STATUTORY_AUTHORITY_LOGOS].map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={idx}
-                  className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-850/80 border border-slate-200 dark:border-slate-750 text-slate-800 dark:text-slate-200 text-xs shrink-0 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-500/40 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all select-none"
-                >
-                  <div className="w-6 h-6 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 dark:bg-indigo-950/80 dark:border-indigo-800/50 dark:text-indigo-400 flex items-center justify-center">
-                    <Icon className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-[11px] text-slate-900 dark:text-slate-100">{item.name}</div>
-                    <div className="text-[9px] text-slate-500 dark:text-slate-400 font-medium">{item.role}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <LogosCarousel />
       </div>
 
       {/* SECTION 1: What CivicPath Does (Step 5) */}
@@ -155,7 +144,10 @@ export default function ScrollLogosCarousel({
           isCurrentStep(6) && 'sequential-glow-active'
         )}
       >
-        <div id="section-how-to-use" className="p-6 rounded-2xl bg-white/90 dark:bg-slate-900/70 border border-slate-200/90 dark:border-slate-800 space-y-6 shadow-sm">
+        <div
+          id="section-how-to-use"
+          className="p-6 rounded-2xl bg-white/90 dark:bg-slate-900/70 border border-slate-200/90 dark:border-slate-800 space-y-6 shadow-sm"
+        >
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 dark:bg-indigo-950/80 dark:border-indigo-800/60 dark:text-indigo-400 flex items-center justify-center">
               <CheckSquare className="w-4 h-4" />
@@ -166,74 +158,146 @@ export default function ScrollLogosCarousel({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-750 space-y-1.5 shadow-2xs">
+          <div ref={sectionRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-white border border-slate-200 dark:border-slate-300 space-y-1.5 shadow-2xs">
               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-800/50">
                 Step 1
               </span>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200">Describe What You Need</h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                Enter your custom request in the search box above (e.g. Pune G+2 Bungalow or hill station house).
-              </p>
+              <TextGenerateEffect
+                as="h4"
+                words="Describe What You Need"
+                className="text-xs font-bold text-slate-900 dark:text-black"
+                isVisible={hasScrolledIntoView}
+                baseDelay={0}
+                wordDelay={25}
+              />
+              <TextGenerateEffect
+                as="p"
+                words="Enter your custom request in the search box above (e.g. Pune G+2 Bungalow or hill station house)."
+                className="text-[11px] text-slate-600 dark:text-slate-800 font-medium"
+                isVisible={hasScrolledIntoView}
+                baseDelay={80}
+                wordDelay={22}
+              />
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-750 space-y-1.5 shadow-2xs">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-white border border-slate-200 dark:border-slate-300 space-y-1.5 shadow-2xs">
               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-800/50">
                 Step 2
               </span>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200">Click Construct</h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                Press the Construct button to open the Plot Questionnaire modal.
-              </p>
+              <TextGenerateEffect
+                as="h4"
+                words="Click Construct"
+                className="text-xs font-bold text-slate-900 dark:text-black"
+                isVisible={hasScrolledIntoView}
+                baseDelay={180}
+                wordDelay={25}
+              />
+              <TextGenerateEffect
+                as="p"
+                words="Press the Construct button to open the Plot Questionnaire modal."
+                className="text-[11px] text-slate-600 dark:text-slate-800 font-medium"
+                isVisible={hasScrolledIntoView}
+                baseDelay={240}
+                wordDelay={22}
+              />
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-750 space-y-1.5 shadow-2xs">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-white border border-slate-200 dark:border-slate-300 space-y-1.5 shadow-2xs">
               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-800/50">
                 Step 3
               </span>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200">Answer Plot Questionnaire</h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                Confirm your plot dimensions, building height, road width, and any site factors (trees, heritage, airport, HT lines).
-              </p>
+              <TextGenerateEffect
+                as="h4"
+                words="Answer Plot Questionnaire"
+                className="text-xs font-bold text-slate-900 dark:text-black"
+                isVisible={hasScrolledIntoView}
+                baseDelay={360}
+                wordDelay={25}
+              />
+              <TextGenerateEffect
+                as="p"
+                words="Confirm your plot dimensions, building height, road width, and any site factors (trees, heritage, airport, HT lines)."
+                className="text-[11px] text-slate-600 dark:text-slate-800 font-medium"
+                isVisible={hasScrolledIntoView}
+                baseDelay={420}
+                wordDelay={22}
+              />
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-750 space-y-1.5 shadow-2xs">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-white border border-slate-200 dark:border-slate-300 space-y-1.5 shadow-2xs">
               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-800/50">
                 Step 4
               </span>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200">Review Your Roadmap</h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                Explore the generated node workflow, estimated timelines, statutory rules, forms, and official government portal links.
-              </p>
+              <TextGenerateEffect
+                as="h4"
+                words="Review Your Roadmap"
+                className="text-xs font-bold text-slate-900 dark:text-black"
+                isVisible={hasScrolledIntoView}
+                baseDelay={540}
+                wordDelay={25}
+              />
+              <TextGenerateEffect
+                as="p"
+                words="Explore the generated node workflow, estimated timelines, statutory rules, forms, and official government portal links."
+                className="text-[11px] text-slate-600 dark:text-slate-800 font-medium"
+                isVisible={hasScrolledIntoView}
+                baseDelay={600}
+                wordDelay={22}
+              />
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-750 space-y-1.5 shadow-2xs">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-white border border-slate-200 dark:border-slate-300 space-y-1.5 shadow-2xs">
               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-800/50">
                 Step 5
               </span>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200">Track Progress Step-by-Step</h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                Click "Mark Step as Completed" to track progress. CivicPath automatically highlights the next consecutive statutory step.
-              </p>
+              <TextGenerateEffect
+                as="h4"
+                words="Track Progress Step-by-Step"
+                className="text-xs font-bold text-slate-900 dark:text-black"
+                isVisible={hasScrolledIntoView}
+                baseDelay={720}
+                wordDelay={25}
+              />
+              <TextGenerateEffect
+                as="p"
+                words='Click "Mark Step as Completed" to track progress. CivicPath automatically highlights the next consecutive statutory step.'
+                className="text-[11px] text-slate-600 dark:text-slate-800 font-medium"
+                isVisible={hasScrolledIntoView}
+                baseDelay={780}
+                wordDelay={22}
+              />
             </div>
 
             <button
               type="button"
               onClick={onOpenJargonBuster}
-              className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-850/80 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 hover:border-indigo-400 dark:hover:border-indigo-500/50 space-y-1.5 text-left transition-all cursor-pointer group shadow-2xs"
+              className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-white dark:hover:bg-slate-100 border border-slate-200 dark:border-slate-300 hover:border-indigo-400 dark:hover:border-indigo-500/50 space-y-1.5 text-left transition-all cursor-pointer group shadow-2xs"
             >
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-800/50">
                   Step 6
                 </span>
-                <span className="text-[11px] text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 font-semibold flex items-center gap-1">
+                <span className="text-[11px] text-indigo-600 dark:text-indigo-700 group-hover:text-indigo-700 font-semibold flex items-center gap-1">
                   Open Jargon Buster →
                 </span>
               </div>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200">Use Dossier & Jargon Tools</h4>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                Download your Master Document Kit or open the Jargon Buster glossary for simple explanations of civic terms (7/12, IOD, CC, OC).
-              </p>
+              <TextGenerateEffect
+                as="h4"
+                words="Use Dossier & Jargon Tools"
+                className="text-xs font-bold text-slate-900 dark:text-black"
+                isVisible={hasScrolledIntoView}
+                baseDelay={900}
+                wordDelay={25}
+              />
+              <TextGenerateEffect
+                as="p"
+                words="Download your Master Document Kit or open the Jargon Buster glossary for simple explanations of civic terms (7/12, IOD, CC, OC)."
+                className="text-[11px] text-slate-600 dark:text-slate-800 font-medium"
+                isVisible={hasScrolledIntoView}
+                baseDelay={960}
+                wordDelay={22}
+              />
             </button>
           </div>
         </div>

@@ -910,6 +910,7 @@ export default function App() {
                 selectedNodeId={selectedNode?.id}
                 completedNodes={completedNodes}
                 onToggleComplete={handleToggleComplete}
+                onResetRoadmap={() => setCompletedNodes(new Set())}
               />
 
               {/* Legal / Statutory Guidance Disclaimer */}

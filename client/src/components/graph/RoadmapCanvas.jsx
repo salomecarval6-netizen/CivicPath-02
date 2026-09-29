@@ -15,6 +15,9 @@ import '@xyflow/react/dist/style.css';
 
 import CivicNode from './CivicNode';
 import Timescale from './Timescale';
+import StatutoryTimelineRuler from './StatutoryTimelineRuler';
+import StatutoryClearanceDossierModal from '../modals/StatutoryClearanceDossierModal';
+import { triggerCelebrationConfetti } from '../../utils/confetti';
 import {
   CheckCircle2,
   Maximize2,
@@ -25,7 +28,8 @@ import {
   Target,
   Sparkles,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Award
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -205,6 +209,7 @@ function InnerRoadmapCanvas({
   selectedNodeId,
   completedNodes = new Set(),
   onToggleComplete,
+  onResetRoadmap,
   className
 }) {
   const isDark = useIsDarkMode();
@@ -212,6 +217,8 @@ function InnerRoadmapCanvas({
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [activeStageFilter, setActiveStageFilter] = useState(null);
+  const [isDossierOpen, setIsDossierOpen] = useState(false);
+  const hasCelebratedRef = React.useRef(false);
 
   const { fitView, setCenter, zoomTo, zoomIn, zoomOut } = useReactFlow();
 
@@ -224,12 +231,14 @@ function InnerRoadmapCanvas({
 
   // Compute status for all nodes based on prerequisites DAG
   const computedGraph = useMemo(() => {
-    if (!graphData || !graphData.nodes) return { nodes: [], edges: [], stages: [] };
+    if (!graphData || !graphData.nodes) return { nodes: [], edges: [], stages: [], isAllComplete: false };
     const { nodes: rawNodes, edges: rawEdges, stages } = layoutDAG(
       graphData.nodes,
       graphData.edges,
       orientation
     );
+
+    const isAllComplete = rawNodes.length > 0 && rawNodes.every((n) => completedNodes.has(n.id));
 
     // Build incoming prerequisite lookup
     const incomingParents = new Map();
@@ -266,16 +275,18 @@ function InnerRoadmapCanvas({
       };
     });
 
-    // Update edge styling based on parent completion and theme
+    // Update edge styling based on completion and theme
     const enrichedEdges = rawEdges.map((e) => {
       const sourceCompleted = completedNodes.has(e.source);
-      const edgeColor = sourceCompleted ? '#10b981' : isDark ? '#6366f1' : '#3b82f6';
+      const edgeColor = isAllComplete ? '#10b981' : sourceCompleted ? '#10b981' : isDark ? '#6366f1' : '#3b82f6';
       return {
         ...e,
+        animated: true,
         style: {
           ...e.style,
           stroke: edgeColor,
-          strokeWidth: sourceCompleted ? 2.5 : 1.75
+          strokeWidth: isAllComplete ? 3 : sourceCompleted ? 2.5 : 1.75,
+          strokeDasharray: isAllComplete ? undefined : '6 4'
         },
         markerEnd: {
           ...e.markerEnd,
@@ -284,18 +295,18 @@ function InnerRoadmapCanvas({
         labelStyle: {
           fontSize: 10,
           fontWeight: 600,
-          fill: isDark ? '#94a3b8' : '#475569'
+          fill: isAllComplete ? '#10b981' : isDark ? '#94a3b8' : '#475569'
         },
         labelBgStyle: {
           fill: isDark ? '#0f172a' : '#ffffff',
           fillOpacity: 0.95,
-          stroke: isDark ? '#334155' : '#e2e8f0',
+          stroke: isAllComplete ? '#10b981' : isDark ? '#334155' : '#e2e8f0',
           strokeWidth: 1
         }
       };
     });
 
-    return { nodes: enrichedNodes, edges: enrichedEdges, stages };
+    return { nodes: enrichedNodes, edges: enrichedEdges, stages, isAllComplete };
   }, [graphData, completedNodes, selectedNodeId, orientation, isDark, handleStatusChange]);
 
   // Sync ReactFlow internal state with computed nodes and edges
@@ -377,8 +388,25 @@ function InnerRoadmapCanvas({
     const total = graphData?.nodes?.length || 0;
     const completedCount = completedNodes.size;
     const progressPercent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
-    return { total, completedCount, progressPercent };
+    const isComplete = total > 0 && completedCount >= total;
+    return { total, completedCount, progressPercent, isComplete };
   }, [graphData, completedNodes]);
+
+  // Trigger celebration visual effect and open dossier modal when all 5 stages reach 100%
+  useEffect(() => {
+    if (stats.isComplete) {
+      if (!hasCelebratedRef.current) {
+        hasCelebratedRef.current = true;
+        triggerCelebrationConfetti(3500);
+        const timer = setTimeout(() => {
+          setIsDossierOpen(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      hasCelebratedRef.current = false;
+    }
+  }, [stats.isComplete]);
 
   const handleNodeClick = useCallback(
     (event, node) => {
@@ -397,6 +425,15 @@ function InnerRoadmapCanvas({
         completedNodes={completedNodes}
         activeStage={activeStageFilter}
         onFocusStage={handleFocusStage}
+      />
+
+      {/* Visual Statutory Timeline / Ruler Milestone Journey */}
+      <StatutoryTimelineRuler
+        graphData={graphData}
+        completedNodes={completedNodes}
+        activeStage={activeStageFilter}
+        onFocusStage={handleFocusStage}
+        onOpenDossier={() => setIsDossierOpen(true)}
       />
 
       {/* Main Flow Canvas */}
@@ -433,7 +470,14 @@ function InnerRoadmapCanvas({
           {/* Top Left: Blueprint Tag & Progress Meter */}
           <Panel position="top-left" className="m-3 flex flex-wrap items-center gap-2 pointer-events-auto">
             {/* Progress Badge */}
-            <div className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-md dark:shadow-xl text-slate-900 dark:text-slate-100">
+            <div
+              className={clsx(
+                'flex items-center gap-3 px-3.5 py-2 rounded-xl backdrop-blur-md shadow-md dark:shadow-xl text-slate-900 dark:text-slate-100 transition-all',
+                stats.isComplete
+                  ? 'bg-emerald-50/90 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700/80'
+                  : 'bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800'
+              )}
+            >
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                 <span className="text-xs font-bold">
@@ -454,21 +498,46 @@ function InnerRoadmapCanvas({
               <span className="text-slate-300 dark:text-slate-600">|</span>
               <span>UDCPR 2020 DAG</span>
             </div>
+
+            {/* Final Sanction Dossier Quick Button if 100% complete */}
+            {stats.isComplete && (
+              <button
+                type="button"
+                onClick={() => setIsDossierOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md shadow-emerald-600/30 transition-all cursor-pointer active:scale-95 animate-pulse"
+                title="View Final Statutory Clearance Dossier"
+              >
+                <Award className="w-3.5 h-3.5" />
+                <span>Sanction Dossier</span>
+              </button>
+            )}
           </Panel>
 
           {/* Bottom Center: Floating Glassmorphism Quick-Nav Dock */}
           <Panel position="bottom-center" className="mb-4 z-20">
             <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-lg dark:shadow-xl text-slate-800 dark:text-slate-200">
-              {/* Next Actionable Step Trigger */}
-              <button
-                type="button"
-                onClick={handleFocusActionable}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
-                title="Center camera on the next actionable step"
-              >
-                <Target className="w-3.5 h-3.5 animate-pulse" />
-                <span>Next Step</span>
-              </button>
+              {/* Next Actionable Step Trigger OR Final Dossier Button */}
+              {stats.isComplete ? (
+                <button
+                  type="button"
+                  onClick={() => setIsDossierOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-bold shadow-md shadow-emerald-600/30 transition-all cursor-pointer"
+                  title="Open Project Clearance Dossier"
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  <span>Sanction Dossier</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleFocusActionable}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
+                  title="Center camera on the next actionable step"
+                >
+                  <Target className="w-3.5 h-3.5 animate-pulse" />
+                  <span>Next Step</span>
+                </button>
+              )}
 
               <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-0.5" />
 
@@ -550,6 +619,15 @@ function InnerRoadmapCanvas({
           </Panel>
         </ReactFlow>
       </div>
+
+      {/* Statutory Clearance Dossier Modal (Auto-opens at 100% completion) */}
+      <StatutoryClearanceDossierModal
+        isOpen={isDossierOpen}
+        onClose={() => setIsDossierOpen(false)}
+        graphData={graphData}
+        completedNodes={completedNodes}
+        onResetRoadmap={onResetRoadmap}
+      />
     </div>
   );
 }

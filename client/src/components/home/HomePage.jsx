@@ -288,7 +288,7 @@ export default function HomePage({
                         onClearScopeFeedback();
                       }
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300/80 text-slate-700 dark:bg-slate-850 dark:hover:bg-slate-800 dark:border-slate-700 dark:text-slate-300 text-[11px] transition-colors cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300/80 text-black dark:text-black font-semibold dark:bg-slate-100 dark:hover:bg-slate-200 dark:border-slate-300/80 text-[11px] transition-colors cursor-pointer"
                   >
                     {p.title}
                   </button>

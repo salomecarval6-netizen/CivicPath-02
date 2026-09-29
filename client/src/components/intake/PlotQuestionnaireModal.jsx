@@ -364,8 +364,8 @@ export default function PlotQuestionnaireModal({
 
             {/* Conditional Sub-Question: Other Description */}
             {formData.constructionType === 'OTHER' && (
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-850/90 border border-slate-200 dark:border-slate-750 animate-in fade-in duration-150 space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+              <div className="p-3.5 rounded-xl bg-white dark:bg-white border border-slate-200 dark:border-slate-300 animate-in fade-in duration-150 space-y-1.5 shadow-2xs">
+                <label className="block text-xs font-bold text-slate-900 dark:text-black">
                   Describe Custom Construction Type
                 </label>
                 <input
@@ -373,27 +373,27 @@ export default function PlotQuestionnaireModal({
                   value={formData.customConstructionType}
                   onChange={(e) => setFormData({ ...formData, customConstructionType: e.target.value })}
                   placeholder="e.g. Data Center, Sports Complex, Film Studio, Solar Farm..."
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  className="w-full bg-white dark:bg-white border border-slate-300 dark:border-slate-400 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-black placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                 />
               </div>
             )}
 
             {/* Conditional Sub-Question: Mixed Use Components */}
             {formData.constructionType === 'MIXED_USE' && (
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-850/90 border border-slate-200 dark:border-slate-750 animate-in fade-in duration-150 space-y-2">
-                <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+              <div className="p-3.5 rounded-xl bg-white dark:bg-white border border-slate-200 dark:border-slate-300 animate-in fade-in duration-150 space-y-2 shadow-2xs">
+                <label className="block text-xs font-bold text-slate-900 dark:text-black">
                   Select Primary Mixed-Use Components:
                 </label>
                 <div className="flex flex-wrap gap-3 text-xs">
                   {['RESIDENTIAL', 'COMMERCIAL', 'INSTITUTIONAL', 'HOSPITALITY', 'OTHER'].map((comp) => {
                     const isChecked = (formData.mixedUseComponents || []).includes(comp);
                     return (
-                      <label key={comp} className="flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                      <label key={comp} className="flex items-center gap-1.5 cursor-pointer text-slate-800 dark:text-black hover:text-slate-950 dark:hover:text-black font-semibold transition-colors">
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => toggleMixedUseComponent(comp)}
-                          className="rounded bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                          className="rounded bg-white dark:bg-white border-slate-300 dark:border-slate-400 text-blue-600 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                         />
                         <span>{comp.charAt(0) + comp.slice(1).toLowerCase()}</span>
                       </label>
@@ -420,10 +420,14 @@ export default function PlotQuestionnaireModal({
               <select
                 value={formData.jurisdiction}
                 onChange={(e) => setFormData({ ...formData, jurisdiction: e.target.value })}
-                className="w-full bg-white dark:bg-slate-850/90 border border-slate-300 dark:border-slate-750 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all cursor-pointer"
               >
                 {MAHARASHTRA_JURISDICTIONS.map((j) => (
-                  <option key={j.id} value={j.id}>
+                  <option
+                    key={j.id}
+                    value={j.id}
+                    className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 py-1"
+                  >
                     {j.label} — {j.desc}
                   </option>
                 ))}
@@ -530,10 +534,10 @@ export default function PlotQuestionnaireModal({
             {/* Statutory Checkboxes */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               {/* Eco-Sensitive Zone */}
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-750 hover:border-slate-300 dark:hover:border-slate-650 transition-colors">
+              <div className="p-3 rounded-xl bg-white dark:bg-white border border-slate-200 dark:border-slate-300 hover:border-slate-400 dark:hover:border-slate-400 transition-colors shadow-2xs">
                 <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="chk-esz" className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 cursor-pointer">
-                    <Mountain className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                  <label htmlFor="chk-esz" className="text-xs font-bold text-slate-900 dark:text-black flex items-center gap-1.5 cursor-pointer">
+                    <Mountain className="w-4 h-4 text-cyan-600 dark:text-cyan-700" />
                     Eco-Sensitive / Hill Station Zone
                   </label>
                   <input
@@ -541,10 +545,10 @@ export default function PlotQuestionnaireModal({
                     type="checkbox"
                     checked={formData.ecoSensitiveZone || /matheran/i.test(formData.jurisdiction)}
                     onChange={(e) => setFormData({ ...formData, ecoSensitiveZone: e.target.checked })}
-                    className="w-4 h-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 cursor-pointer transition-all"
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white dark:bg-white border-slate-300 dark:border-slate-400 cursor-pointer transition-all"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-700 dark:text-slate-900 font-medium">
                   {formData.ecoSensitiveZone || /matheran/i.test(formData.jurisdiction)
                     ? '⚠️ Requires High-Level ESZ Monitoring Committee approval.'
                     : 'Standard urban zone (outside Eco-Sensitive buffer zones).'}
@@ -552,10 +556,10 @@ export default function PlotQuestionnaireModal({
               </div>
 
               {/* Heritage Zone */}
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-750 hover:border-slate-300 dark:hover:border-slate-650 transition-colors">
+              <div className="p-3 rounded-xl bg-white dark:bg-white border border-slate-200 dark:border-slate-300 hover:border-slate-400 dark:hover:border-slate-400 transition-colors shadow-2xs">
                 <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="chk-heritage" className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 cursor-pointer">
-                    <Building2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <label htmlFor="chk-heritage" className="text-xs font-bold text-slate-900 dark:text-black flex items-center gap-1.5 cursor-pointer">
+                    <Building2 className="w-4 h-4 text-amber-600 dark:text-amber-700" />
                     Heritage Precinct (Within 100m)
                   </label>
                   <input
@@ -563,10 +567,10 @@ export default function PlotQuestionnaireModal({
                     type="checkbox"
                     checked={formData.heritageZone}
                     onChange={(e) => setFormData({ ...formData, heritageZone: e.target.checked })}
-                    className="w-4 h-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 cursor-pointer transition-all"
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white dark:bg-white border-slate-300 dark:border-slate-400 cursor-pointer transition-all"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-700 dark:text-slate-900 font-medium">
                   {formData.heritageZone
                     ? '⚠️ Proximity to Grade I/II listed building → MHCC NOC required.'
                     : 'Outside heritage precincts.'}
@@ -574,10 +578,10 @@ export default function PlotQuestionnaireModal({
               </div>
 
               {/* Airport / Aviation Funnel Zone */}
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-750 hover:border-slate-300 dark:hover:border-slate-650 transition-colors">
+              <div className="p-3 rounded-xl bg-white dark:bg-white border border-slate-200 dark:border-slate-300 hover:border-slate-400 dark:hover:border-slate-400 transition-colors shadow-2xs">
                 <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="chk-airport" className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 cursor-pointer">
-                    <Plane className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <label htmlFor="chk-airport" className="text-xs font-bold text-slate-900 dark:text-black flex items-center gap-1.5 cursor-pointer">
+                    <Plane className="w-4 h-4 text-blue-600 dark:text-blue-700" />
                     Airport Funnel (AAI CCZM Map)
                   </label>
                   <input
@@ -585,10 +589,10 @@ export default function PlotQuestionnaireModal({
                     type="checkbox"
                     checked={formData.airportZone}
                     onChange={(e) => setFormData({ ...formData, airportZone: e.target.checked })}
-                    className="w-4 h-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 cursor-pointer transition-all"
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white dark:bg-white border-slate-300 dark:border-slate-400 cursor-pointer transition-all"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-700 dark:text-slate-900 font-medium">
                   {formData.airportZone
                     ? '⚠️ Within civil aviation flight path → AAI NOCAS clearance required.'
                     : 'Outside radar and obstacle limitation surfaces.'}
@@ -596,10 +600,10 @@ export default function PlotQuestionnaireModal({
               </div>
 
               {/* High-Tension Power Line Hazard */}
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-850/80 border border-slate-200 dark:border-slate-750 hover:border-slate-300 dark:hover:border-slate-650 transition-colors">
+              <div className="p-3 rounded-xl bg-white dark:bg-white border border-slate-200 dark:border-slate-300 hover:border-slate-400 dark:hover:border-slate-400 transition-colors shadow-2xs">
                 <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="chk-ht" className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 cursor-pointer">
-                    <Zap className="w-4 h-4 text-amber-500 dark:text-yellow-400" />
+                  <label htmlFor="chk-ht" className="text-xs font-bold text-slate-900 dark:text-black flex items-center gap-1.5 cursor-pointer">
+                    <Zap className="w-4 h-4 text-amber-500 dark:text-amber-600" />
                     Overhead High-Tension (HT) Line
                   </label>
                   <input
@@ -607,10 +611,10 @@ export default function PlotQuestionnaireModal({
                     type="checkbox"
                     checked={formData.hasHighTensionLine}
                     onChange={(e) => setFormData({ ...formData, hasHighTensionLine: e.target.checked })}
-                    className="w-4 h-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 cursor-pointer transition-all"
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white dark:bg-white border-slate-300 dark:border-slate-400 cursor-pointer transition-all"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-700 dark:text-slate-900 font-medium">
                   {formData.hasHighTensionLine
                     ? '⚠️ Requires mandatory corridor verification under UDCPR Reg 3.4.'
                     : 'No overhead transmission corridors crossing plot.'}
