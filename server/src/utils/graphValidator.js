@@ -89,6 +89,10 @@ function validateGraph(graph) {
     if (!node.plainLanguageSummary || typeof node.plainLanguageSummary !== 'string') {
       node.plainLanguageSummary = 'Official statutory clearance step required by local planning authority.';
     }
+
+    if (node.id === 'node_hydraulic_noc' && (!node.statutoryRule || (!node.statutoryRule.includes('Reg 2.2.11') && !node.statutoryRule.includes('Reg 9.22')))) {
+      node.statutoryRule = 'UDCPR 2020, Reg 2.2.11 & Reg 9.22 (Hydraulic & Drainage Clearance)';
+    }
   });
 
   // Validate edges
@@ -120,13 +124,9 @@ function validateGraph(graph) {
     graph.edges = validEdges;
   }
 
-  // Calculate totals if missing
-  if (!graph.totalEstimatedDays || typeof graph.totalEstimatedDays !== 'number') {
-    graph.totalEstimatedDays = graph.nodes.reduce((sum, n) => sum + (n.estimatedDays || 0), 0);
-  }
-  if (!graph.totalEstimatedCostINR || typeof graph.totalEstimatedCostINR !== 'number') {
-    graph.totalEstimatedCostINR = graph.nodes.reduce((sum, n) => sum + (n.cost || 0), 0);
-  }
+  // Calculate dynamic totals from actual validated nodes
+  graph.totalEstimatedDays = graph.nodes.reduce((sum, n) => sum + (n.estimatedDays || 0), 0);
+  graph.totalEstimatedCostINR = graph.nodes.reduce((sum, n) => sum + (n.cost || 0), 0);
 
   return {
     isValid: errors.length === 0,

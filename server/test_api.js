@@ -269,8 +269,39 @@ async function runTests() {
   assert.ok(hydraulicNode.statutoryRule.includes('Reg 2.2.11') || hydraulicNode.statutoryRule.includes('Reg 9.22'), 'Must cite verified hydraulic clearance regulations');
   console.log('  ✓ Water connection query safely served within statutory residential permitting scope\n');
 
+  // TEST 19: All 7 Construction Typologies Verification
+  console.log('[Test 19] Construction Typology Matrix (All 7 Typologies)...');
+  const typologies = [
+    { type: 'COMMERCIAL', expectedNode: 'node_comm_traffic_parking' },
+    { type: 'INSTITUTIONAL', expectedNode: 'node_inst_accessibility' },
+    { type: 'HOSPITALITY', expectedNode: 'node_hosp_env_tourism' },
+    { type: 'MIXED_USE', expectedNode: 'node_mixed_segregation' },
+    { type: 'INDUSTRIAL', expectedNode: 'node_ind_mpcb_dish' },
+    { type: 'RESIDENTIAL', expectedNode: 'node_autodcr' },
+    { type: 'OTHER', expectedNode: 'node_autodcr' }
+  ];
+
+  for (const item of typologies) {
+    const typoRes = await postJson('http://localhost:5000/api/navigate', {
+      query: `Construct ${item.type.toLowerCase()} project in Pune`,
+      city: 'Pune',
+      questionnaire: {
+        constructionType: item.type,
+        jurisdiction: 'Pune',
+        plotArea: 500,
+        buildingHeight: 12.0,
+        roadWidth: 12.0
+      }
+    });
+
+    assert.strictEqual(typoRes.status, 200, `${item.type} must return 200`);
+    assert.strictEqual(typoRes.data.constructionType, item.type, `Must preserve exact constructionType: ${item.type}`);
+    assert.ok(typoRes.data.nodes.some(n => n.id === item.expectedNode), `${item.type} must include expected node ${item.expectedNode}`);
+  }
+  console.log('  ✓ All 7 Construction Typologies successfully produce valid, typology-tailored DAGs\n');
+
   console.log('===========================================================');
-  console.log('🎉 ALL 18 PHASE 8 END-TO-END ACCEPTANCE TESTS PASSED!');
+  console.log('🎉 ALL PHASE 7 INTEGRITY AND ACCEPTANCE TESTS PASSED!');
   console.log('===========================================================\n');
 }
 

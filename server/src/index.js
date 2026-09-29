@@ -20,7 +20,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const GEMINI_API_KEY = (process.env.GEMINI_API_KEY || '').trim();
 
-app.use(cors());
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+  : null;
+
+app.use(cors(allowedOrigins ? { origin: allowedOrigins } : undefined));
 app.use(express.json());
 
 // Load canonical seed cases as fallback
@@ -205,7 +209,7 @@ Return valid JSON with exact schema:
       const aiResult = await generateWithGemini(
         ai,
         prompt,
-        'You are an authoritative town planning workflow generator for construction projects under Maharashtra UDCPR 2020. You must respect the deterministic eligibility outputs and never invent unverified statutory approvals.'
+        'You are a town planning workflow generator for construction projects under Maharashtra UDCPR 2020. You must respect the deterministic eligibility outputs and never invent unverified statutory approvals.'
       );
 
       const parsed = JSON.parse(aiResult.text);
@@ -375,6 +379,22 @@ If "${term}" IS a valid civic/statutory/municipal/legal term or acronym, return 
   });
 });
 
+// Production static asset serving for compiled client
+const clientDistPath = path.join(__dirname, '..', '..', 'client', 'dist');
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  // Single Page Application (SPA) fallback for client routes
+  app.get('/{*splat}', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
+
+// 404 handler for unknown API routes
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found', path: req.path });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
@@ -383,7 +403,6 @@ app.use((err, req, res, next) => {
   console.error('[Unhandled Error]:', err.message);
   return res.status(500).json({ error: 'Internal Server Error' });
 });
-
 
 app.listen(PORT, () => {
   console.log(`[Municipal Bureaucracy API] Server running on http://localhost:${PORT}`);

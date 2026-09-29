@@ -30,10 +30,15 @@ import DocumentDrawer from './components/sidebar/DocumentDrawer';
 import JargonBusterModal from './components/common/JargonBusterModal';
 import PlotQuestionnaireModal from './components/intake/PlotQuestionnaireModal';
 import CommandPaletteModal from './components/common/CommandPaletteModal';
+import ThemeSwitcher from './components/common/ThemeSwitcher';
 import HomePage from './components/home/HomePage';
+import RoadmapGenerationLoader from './components/common/RoadmapGenerationLoader';
+import ShareMenu from './components/common/ShareMenu';
+import CivicIntroScreen from './components/CivicIntroScreen';
 import { API_ENDPOINTS } from './config/api';
 import { classifyRequirementScope } from './utils/scopeClassifier';
 import { loadActiveSession, saveActiveSession, clearActiveSession } from './utils/sessionPersistence';
+import { getInitialTheme, applyTheme, transitionView } from './utils/theme';
 
 // Helper to determine the next consecutive step in the workflow sequence
 function getNextConsecutiveStep(currentNodeId, nodes = [], edges = [], completedSet = new Set()) {
@@ -408,23 +413,81 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => initialSession.isSidebarOpen);
 
   const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState(getInitialTheme);
   const [isJargonModalOpen, setIsJargonModalOpen] = useState(false);
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [scopeFeedback, setScopeFeedback] = useState(null);
 
+  // Session-isolated intro screen (plays once per browser session)
+  const [showIntro, setShowIntro] = useState(() => {
+    try {
+      if (typeof window === 'undefined') return false;
+      return sessionStorage.getItem('civicpath_intro_seen') !== 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleFinishIntro = useCallback(() => {
+    setShowIntro(false);
+    try {
+      sessionStorage.setItem('civicpath_intro_seen', 'true');
+    } catch {
+      // Safe fallback
+    }
+  }, []);
+
+  // Apply initial theme on mount
+  useEffect(() => {
+    applyTheme(theme);
+  }, []);
+
+  // View & Modal Transition Handlers (View Transitions API with fallback)
+  const handleNavigateHome = useCallback(() => {
+    transitionView(() => setCurrentView('home'));
+  }, []);
+
+  const handleNavigateRoadmap = useCallback(() => {
+    transitionView(() => setCurrentView('roadmap'));
+  }, []);
+
+  const handleOpenQuestionnaire = useCallback(() => {
+    transitionView(() => setIsQuestionnaireOpen(true));
+  }, []);
+
+  const handleCloseQuestionnaire = useCallback(() => {
+    transitionView(() => setIsQuestionnaireOpen(false));
+  }, []);
+
+  const handleOpenJargonModal = useCallback(() => {
+    transitionView(() => setIsJargonModalOpen(true));
+  }, []);
+
+  const handleCloseJargonModal = useCallback(() => {
+    transitionView(() => setIsJargonModalOpen(false));
+  }, []);
+
+  const handleToggleCommandPalette = useCallback(() => {
+    transitionView(() => setIsCommandPaletteOpen((prev) => !prev));
+  }, []);
+
+  const handleCloseCommandPalette = useCallback(() => {
+    transitionView(() => setIsCommandPaletteOpen(false));
+  }, []);
+
   // Global ⌘K / Ctrl+K keyboard shortcut for Command Palette
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setIsCommandPaletteOpen((prev) => !prev);
+        handleToggleCommandPalette();
       }
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, []);
+  }, [handleToggleCommandPalette]);
 
   // 2. Reactive Active-Session Persistence (Saves state whenever meaningful roadmap progress changes)
   useEffect(() => {
@@ -615,9 +678,12 @@ export default function App() {
   }, [graphData]);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
+    <div className="flex flex-col h-screen w-screen bg-slate-50 text-slate-900 dark:bg-[#060911] dark:text-slate-100 overflow-hidden font-sans select-none transition-colors duration-200">
+      {/* 0. Apple Hello-inspired Cursive Preloader Intro Screen (Plays once per session) */}
+      {showIntro && <CivicIntroScreen onFinish={handleFinishIntro} />}
+
       {/* Top Navigation Bar (Hidden during print) */}
-      <header className="h-16 shrink-0 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between gap-4 z-30 shadow-md no-print">
+      <header className="h-16 shrink-0 bg-white/95 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between gap-4 z-30 shadow-sm dark:shadow-md backdrop-blur-md no-print">
         {/* Brand & Logo */}
         <div
           onClick={() => setCurrentView('home')}
@@ -628,13 +694,13 @@ export default function App() {
             <Compass className="w-6 h-6 animate-pulse" />
           </div>
           <div>
-            <h1 className="text-base font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent flex items-center gap-2">
+            <h1 className="text-base font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 dark:from-white dark:via-slate-100 dark:to-slate-400 bg-clip-text text-transparent flex items-center gap-2">
               CivicPath
-              <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-indigo-950/80 text-indigo-400 border border-indigo-800/60 hidden sm:inline-block">
+              <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/80 dark:text-indigo-400 dark:border-indigo-800/60 hidden sm:inline-block">
                 UDCPR 2020 & Acts
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400 hidden sm:block truncate max-w-[340px]">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block truncate max-w-[340px]">
               {currentView === 'home'
                 ? 'Maharashtra Construction Permitting Navigator'
                 : (graphData?.taskTitle || 'Statutory Municipal Clearances Roadmap')}
@@ -654,7 +720,7 @@ export default function App() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Enter custom requirement (e.g. Commercial complex Pune, School, Hotel, Factory)..."
-              className="w-full bg-slate-800/90 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-800 focus:border-transparent transition-all"
             />
           </div>
 
@@ -677,18 +743,18 @@ export default function App() {
           </button>
         </form>
 
-        {/* Right Actions: Command Palette, Navigation, Plot Questionnaire, Jargon Buster & Mobile Drawer Toggle */}
+        {/* Right Actions: Command Palette, Navigation, Plot Questionnaire, Jargon Buster, Theme Switcher & Mobile Drawer Toggle */}
         <div className="flex items-center gap-2">
           {/* Quick Command Engine (⌘K / Ctrl+K) */}
           <button
             type="button"
-            onClick={() => setIsCommandPaletteOpen(true)}
-            className="inline-flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-750 active:scale-95 text-slate-200 border border-slate-700/80 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer group"
+            onClick={handleToggleCommandPalette}
+            className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-200 dark:border-slate-700/80 rounded-xl text-xs font-semibold active:scale-95 transition-all shadow-sm cursor-pointer group"
             title="Open Command Engine (⌘K or Ctrl+K)"
           >
-            <Search className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
+            <Search className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
             <span className="hidden sm:inline">Commands</span>
-            <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-bold bg-slate-900 border border-slate-750 text-indigo-300 rounded-md">
+            <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750 text-indigo-600 dark:text-indigo-300 rounded-md">
               <span>⌘</span><span>K</span>
             </kbd>
           </button>
@@ -697,21 +763,21 @@ export default function App() {
           {currentView === 'roadmap' ? (
             <button
               type="button"
-              onClick={() => setCurrentView('home')}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-750 active:scale-95 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              onClick={handleNavigateHome}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold active:scale-95 transition-all shadow-sm cursor-pointer"
               title="Return to Home screen"
             >
-              <Home className="w-4 h-4 text-indigo-400" />
+              <Home className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
               <span className="hidden sm:inline">Home</span>
             </button>
           ) : hasConstructedRoadmap && (
             <button
               type="button"
-              onClick={() => setCurrentView('roadmap')}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-950/90 hover:bg-indigo-900 active:scale-95 text-indigo-300 border border-indigo-800 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer"
+              onClick={handleNavigateRoadmap}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/90 dark:hover:bg-indigo-900 dark:text-indigo-300 dark:border-indigo-800 rounded-xl text-xs font-semibold active:scale-95 transition-all shadow-sm cursor-pointer"
               title="View your active generated roadmap"
             >
-              <Compass className="w-4 h-4 text-indigo-400" />
+              <Compass className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
               <span className="hidden sm:inline">Active Roadmap</span>
             </button>
           )}
@@ -719,31 +785,34 @@ export default function App() {
           {/* Plot Questionnaire Intake Trigger */}
           <button
             type="button"
-            onClick={() => setIsQuestionnaireOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-950/80 hover:bg-indigo-900 active:scale-95 text-indigo-200 border border-indigo-800/80 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+            onClick={handleOpenQuestionnaire}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/80 dark:hover:bg-indigo-900 dark:text-indigo-200 dark:border-indigo-800/80 rounded-xl text-xs font-bold active:scale-95 transition-all shadow-sm cursor-pointer"
             title="Configure plot parameters to calculate applicable NOCs"
           >
-            <Sliders className="w-4 h-4 text-indigo-400" />
+            <Sliders className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
             <span className="hidden sm:inline">Plot Questionnaire</span>
           </button>
 
           {/* Jargon Buster */}
           <button
             type="button"
-            onClick={() => setIsJargonModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-750 active:scale-95 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer"
+            onClick={handleOpenJargonModal}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold active:scale-95 transition-all shadow-sm cursor-pointer"
             title="Open Civic Jargon Buster glossary"
           >
-            <BookOpen className="w-4 h-4 text-indigo-400" />
+            <BookOpen className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
             <span className="hidden sm:inline">Jargon Buster</span>
           </button>
+
+          {/* Theme Switcher (Light / Dark Mode) */}
+          <ThemeSwitcher theme={theme} onThemeChange={setTheme} />
 
           {/* Mobile Drawer Toggle (Only active in roadmap view) */}
           {currentView === 'roadmap' && (
             <button
               type="button"
               onClick={() => setMobileDrawerOpen((prev) => !prev)}
-              className="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 cursor-pointer"
+              className="lg:hidden p-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 cursor-pointer"
               title="Toggle Document Drawer"
             >
               {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -752,51 +821,60 @@ export default function App() {
         </div>
       </header>
 
-      {/* VIEW 1: HOME PAGE */}
-      {currentView === 'home' ? (
-        <HomePage
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          onStartConstruct={handleStartConstruct}
-          onOpenQuestionnaire={() => setIsQuestionnaireOpen(true)}
-          onOpenJargonBuster={() => setIsJargonModalOpen(true)}
-          hasActiveRoadmap={hasConstructedRoadmap}
-          onViewActiveRoadmap={() => setCurrentView('roadmap')}
-          loading={loading}
-          scopeFeedback={scopeFeedback}
-          onClearScopeFeedback={() => setScopeFeedback(null)}
-        />
-      ) : (
+      {/* Main Viewport Workspace with Background Parallax Softening when Modal is Open */}
+      <div
+        className={clsx(
+          'flex-1 flex flex-col min-h-0 overflow-hidden transition-all duration-300 ease-out will-change-transform',
+          isQuestionnaireOpen && 'scale-[0.985] filter blur-[0.5px] opacity-90'
+        )}
+      >
+        {/* VIEW 1: HOME PAGE */}
+        {currentView === 'home' ? (
+          <HomePage
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            onStartConstruct={handleStartConstruct}
+            onOpenQuestionnaire={handleOpenQuestionnaire}
+            onOpenJargonBuster={handleOpenJargonModal}
+            hasActiveRoadmap={hasConstructedRoadmap}
+            onViewActiveRoadmap={handleNavigateRoadmap}
+            loading={loading}
+            scopeFeedback={scopeFeedback}
+            onClearScopeFeedback={() => setScopeFeedback(null)}
+            introActive={showIntro}
+            onReplayIntro={() => setShowIntro(true)}
+          />
+        ) : (
         /* VIEW 2: ROADMAP WORKSPACE */
         <>
           {/* Sub-Header Bar: Jurisdiction, Typology & Provenance (Hidden during print) */}
-          <div className="h-10 shrink-0 bg-slate-950/95 border-b border-slate-800 px-4 flex items-center justify-between gap-2 overflow-x-auto text-xs no-print">
+          <div className="h-10 shrink-0 bg-white/95 dark:bg-slate-950/95 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between gap-2 overflow-x-auto text-xs no-print shadow-xs">
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setCurrentView('home')}
-                className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-indigo-300 font-medium cursor-pointer mr-1"
+                onClick={handleNavigateHome}
+                className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 font-medium cursor-pointer mr-1"
               >
                 <span>← Home</span>
               </button>
-              <div className="flex items-center gap-1 text-slate-300 text-[11px]">
-                <MapPin className="w-3.5 h-3.5 text-indigo-400" />
+              <div className="flex items-center gap-1 text-slate-700 dark:text-slate-300 text-[11px]">
+                <MapPin className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
                 <span>Authority: <strong>{graphData?.jurisdiction?.split('(')[0]?.trim() || questionnaireState.jurisdiction || 'Maharashtra'}</strong></span>
               </div>
-              <div className="hidden sm:flex items-center gap-1 text-slate-300 text-[11px] px-2 py-0.5 rounded bg-indigo-950/60 border border-indigo-800/50">
-                <Building2 className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Type: <strong className="text-indigo-300 uppercase">{graphData?.constructionType || questionnaireState?.constructionType || 'RESIDENTIAL'}</strong></span>
+              <div className="hidden sm:flex items-center gap-1 text-slate-700 dark:text-slate-300 text-[11px] px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 dark:bg-indigo-950/60 dark:border-indigo-800/50">
+                <Building2 className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+                <span>Type: <strong className="text-indigo-700 dark:text-indigo-300 uppercase">{graphData?.constructionType || questionnaireState?.constructionType || 'RESIDENTIAL'}</strong></span>
               </div>
               {/* Telemetry Live Engine Status */}
-              <div className="hidden lg:flex items-center gap-2 text-[10px] font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-900/90 border border-slate-800">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="hidden lg:flex items-center gap-2 text-[10px] font-mono text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
                 <span>MahaBPAMS Scrutiny: Online</span>
               </div>
             </div>
 
             {/* Provenance & Timeline Status */}
-            <div className="flex items-center gap-3 text-[11px] text-slate-400">
-              <span className="hidden sm:inline-block px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300">
+            <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="hidden sm:inline-block px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300">
                 Est. ~{graphData?.totalEstimatedDays || 90} Days • ₹{(graphData?.totalEstimatedCostINR || 58500).toLocaleString('en-IN')}
               </span>
 
@@ -804,12 +882,21 @@ export default function App() {
               <div className="flex items-center gap-1.5">
                 <span className={clsx(
                   "w-2 h-2 rounded-full",
-                  graphData?.provenance === 'live_ai_grounded' ? "bg-emerald-400 animate-pulse" : "bg-indigo-400"
+                  graphData?.provenance === 'live_ai_grounded' ? "bg-emerald-500 dark:bg-emerald-400 animate-pulse" : "bg-indigo-500 dark:bg-indigo-400"
                 )} />
-                <span className="text-slate-300 font-medium">
+                <span className="text-slate-700 dark:text-slate-300 font-medium">
                   {graphData?.provenanceLabel || (graphData?.provenance === 'live_ai_grounded' ? 'Live AI-tailored' : 'Statutory UDCPR blueprint')}
                 </span>
               </div>
+
+              {/* Roadmap Context Share Menu */}
+              <ShareMenu
+                graphData={graphData}
+                selectedNode={selectedNode}
+                align="right"
+                label="Share"
+                buttonClassName="bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 dark:text-slate-200 dark:border-slate-750 px-2 py-1 text-[11px]"
+              />
             </div>
           </div>
 
@@ -826,8 +913,8 @@ export default function App() {
               />
 
               {/* Legal / Statutory Guidance Disclaimer */}
-              <div className="absolute bottom-3 left-4 z-10 hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/80 backdrop-blur-md border border-slate-800/80 text-[11px] text-slate-400 shadow-md">
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+              <div className="absolute bottom-3 left-4 z-10 hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/90 dark:bg-slate-950/80 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-600 dark:text-slate-400 shadow-md">
+                <ShieldCheck className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
                 <span>Statutory guidance only — verify with your Planning Authority or a licensed architect.</span>
               </div>
 
@@ -836,15 +923,15 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsSidebarOpen(true)}
-                  className="absolute right-4 top-14 z-20 flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/95 hover:bg-slate-850 text-slate-100 border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all hover:border-indigo-500/60 group cursor-pointer"
+                  className="absolute right-4 top-14 z-20 flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/95 hover:bg-slate-100 text-slate-800 border border-slate-200 shadow-2xl dark:bg-slate-900/95 dark:hover:bg-slate-850 dark:text-slate-100 dark:border-slate-700/80 backdrop-blur-md transition-all hover:border-indigo-500/60 group cursor-pointer"
                   title="Open Master Dossier & Step Inspector"
                 >
-                  <PanelRightOpen className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+                  <PanelRightOpen className="w-4 h-4 text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
                   <span className="text-xs font-semibold">
                     {selectedNode ? (
                       <span className="flex items-center gap-1.5">
-                        <span className="text-slate-400 font-normal">Step:</span>
-                        <span className="text-indigo-300 font-bold max-w-[150px] truncate">{selectedNode.title}</span>
+                        <span className="text-slate-500 dark:text-slate-400 font-normal">Step:</span>
+                        <span className="text-indigo-600 dark:text-indigo-300 font-bold max-w-[150px] truncate">{selectedNode.title}</span>
                       </span>
                     ) : (
                       <span>Open Dossier & Inspector</span>
@@ -870,7 +957,7 @@ export default function App() {
                 onSelectNode={handleSelectNode}
                 completedNodes={completedNodes}
                 onToggleComplete={handleToggleComplete}
-                onOpenQuestionnaire={() => setIsQuestionnaireOpen(true)}
+                onOpenQuestionnaire={handleOpenQuestionnaire}
                 onClose={() => {
                   setIsSidebarOpen(false);
                   setMobileDrawerOpen(false);
@@ -880,11 +967,12 @@ export default function App() {
           </main>
         </>
       )}
+      </div>
 
       {/* Plot Questionnaire Intake Modal */}
       <PlotQuestionnaireModal
         isOpen={isQuestionnaireOpen}
-        onClose={() => setIsQuestionnaireOpen(false)}
+        onClose={handleCloseQuestionnaire}
         initialValues={questionnaireState}
         onSubmitQuestionnaire={handleQuestionnaireSubmit}
         loading={loading}
@@ -895,21 +983,21 @@ export default function App() {
       {/* Jargon Buster Glossary Modal */}
       <JargonBusterModal
         isOpen={isJargonModalOpen}
-        onClose={() => setIsJargonModalOpen(false)}
+        onClose={handleCloseJargonModal}
         graphData={graphData}
       />
 
       {/* Global Command Palette Modal */}
       <CommandPaletteModal
         isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
+        onClose={handleCloseCommandPalette}
         graphData={graphData}
         completedNodes={completedNodes}
         onSelectNode={handleSelectNode}
-        onOpenQuestionnaire={() => setIsQuestionnaireOpen(true)}
-        onOpenJargonBuster={() => setIsJargonModalOpen(true)}
-        onNavigateHome={() => setCurrentView('home')}
-        onNavigateRoadmap={() => setCurrentView('roadmap')}
+        onOpenQuestionnaire={handleOpenQuestionnaire}
+        onOpenJargonBuster={handleOpenJargonModal}
+        onNavigateHome={handleNavigateHome}
+        onNavigateRoadmap={handleNavigateRoadmap}
         onSelectCity={(city) => {
           setSelectedCity(city);
           handleStartConstruct(city);
@@ -924,6 +1012,14 @@ export default function App() {
           );
         }}
       />
+
+      {/* Mobius Loop & Shimmering Text Generation Loading Overlay */}
+      <RoadmapGenerationLoader loading={loading} />
+
+      {/* Cursive Handwriting 'CivicPath' Signature Intro Screen */}
+      {showIntro && (
+        <CivicIntroScreen onFinish={handleFinishIntro} />
+      )}
     </div>
   );
 }

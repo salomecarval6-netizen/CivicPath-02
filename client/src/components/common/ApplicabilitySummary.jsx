@@ -13,6 +13,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import clsx from 'clsx';
+import CopyButton from './CopyButton';
 
 const DEFAULT_FALLBACK_ELIGIBILITY = {
   constructionType: 'RESIDENTIAL',
@@ -286,18 +287,28 @@ export default function ApplicabilitySummary({ eligibility, onOpenQuestionnaire 
                   applicable.map((item, idx) => (
                     <div
                       key={item.id || idx}
-                      className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-900/50 hover:border-emerald-700/60 transition-colors space-y-1.5"
+                      className="group p-3 rounded-xl bg-emerald-950/20 border border-emerald-900/50 hover:border-emerald-700/60 transition-colors space-y-1.5"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <span className="font-bold text-emerald-300 flex items-center gap-1.5 text-xs">
+                        <span className="font-bold text-emerald-300 flex items-center gap-1.5 text-xs flex-1">
                           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                           {item.name}
                         </span>
-                        {item.statutoryRef && (
-                          <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-950/90 text-emerald-400 border border-emerald-800/60 shrink-0">
-                            {item.statutoryRef}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {item.statutoryRef && (
+                            <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-950/90 text-emerald-400 border border-emerald-800/60">
+                              {item.statutoryRef}
+                            </span>
+                          )}
+                          <CopyButton
+                            text={`${item.name} — ${item.reason}`}
+                            label=""
+                            copiedLabel="Copied"
+                            size="xs"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Copy determination summary"
+                          />
+                        </div>
                       </div>
                       <p className="text-[11px] text-slate-300 pl-5 leading-relaxed">
                         {item.reason}
@@ -316,16 +327,26 @@ export default function ApplicabilitySummary({ eligibility, onOpenQuestionnaire 
                   exempt.map((item, idx) => (
                     <div
                       key={item.id || idx}
-                      className="p-3 rounded-xl bg-slate-950/50 border border-slate-800/80 text-slate-400 hover:border-slate-700/60 transition-colors space-y-1.5"
+                      className="group p-3 rounded-xl bg-slate-950/50 border border-slate-800/80 text-slate-400 hover:border-slate-700/60 transition-colors space-y-1.5"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <span className="font-bold text-slate-300 line-through flex items-center gap-1.5 text-xs">
+                        <span className="font-bold text-slate-300 line-through flex items-center gap-1.5 text-xs flex-1">
                           <XCircle className="w-4 h-4 text-slate-400 shrink-0" />
                           {item.name}
                         </span>
-                        <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 shrink-0">
-                          EXEMPT
-                        </span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                            EXEMPT
+                          </span>
+                          <CopyButton
+                            text={`${item.name} (EXEMPT) — ${item.reason}`}
+                            label=""
+                            copiedLabel="Copied"
+                            size="xs"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Copy exemption reason"
+                          />
+                        </div>
                       </div>
                       <p className="text-[11px] text-slate-400 pl-5 leading-relaxed">
                         {item.reason}
@@ -344,16 +365,26 @@ export default function ApplicabilitySummary({ eligibility, onOpenQuestionnaire 
                   uncertain.map((item, idx) => (
                     <div
                       key={item.id || idx}
-                      className="p-3 rounded-xl bg-amber-950/20 border border-amber-900/50 text-amber-200 hover:border-amber-700/60 transition-colors space-y-1.5"
+                      className="group p-3 rounded-xl bg-amber-950/20 border border-amber-900/50 text-amber-200 hover:border-amber-700/60 transition-colors space-y-1.5"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <span className="font-bold text-amber-300 flex items-center gap-1.5 text-xs">
+                        <span className="font-bold text-amber-300 flex items-center gap-1.5 text-xs flex-1">
                           <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
                           {item.name}
                         </span>
-                        <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-950/90 text-amber-400 border border-amber-800/60 shrink-0">
-                          VERIFY
-                        </span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-950/90 text-amber-400 border border-amber-800/60">
+                            VERIFY
+                          </span>
+                          <CopyButton
+                            text={`${item.name} (REQUIRES VERIFICATION) — ${item.reason}`}
+                            label=""
+                            copiedLabel="Copied"
+                            size="xs"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Copy verification caveat"
+                          />
+                        </div>
                       </div>
                       <p className="text-[11px] text-slate-300 pl-5 leading-relaxed">
                         {item.reason}

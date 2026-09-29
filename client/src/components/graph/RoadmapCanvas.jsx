@@ -14,6 +14,7 @@ import {
 import '@xyflow/react/dist/style.css';
 
 import CivicNode from './CivicNode';
+import Timescale from './Timescale';
 import {
   CheckCircle2,
   Maximize2,
@@ -179,6 +180,25 @@ function layoutDAG(rawNodes = [], rawEdges = [], orientation = 'TB') {
   return { nodes: positionedNodes, edges: styledEdges, stages: uniqueStages };
 }
 
+function useIsDarkMode() {
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document === 'undefined') return true;
+    return document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark';
+  });
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const observer = new MutationObserver(() => {
+      const dark = document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark';
+      setIsDark(dark);
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    return () => observer.disconnect();
+  }, []);
+
+  return isDark;
+}
+
 function InnerRoadmapCanvas({
   graphData,
   onSelectNode,
@@ -187,6 +207,7 @@ function InnerRoadmapCanvas({
   onToggleComplete,
   className
 }) {
+  const isDark = useIsDarkMode();
   const [orientation, setOrientation] = useState('TB'); // 'TB' | 'LR'
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -245,25 +266,37 @@ function InnerRoadmapCanvas({
       };
     });
 
-    // Update edge styling based on parent completion
+    // Update edge styling based on parent completion and theme
     const enrichedEdges = rawEdges.map((e) => {
       const sourceCompleted = completedNodes.has(e.source);
+      const edgeColor = sourceCompleted ? '#10b981' : isDark ? '#6366f1' : '#3b82f6';
       return {
         ...e,
         style: {
           ...e.style,
-          stroke: sourceCompleted ? '#10b981' : '#6366f1',
+          stroke: edgeColor,
           strokeWidth: sourceCompleted ? 2.5 : 1.75
         },
         markerEnd: {
           ...e.markerEnd,
-          color: sourceCompleted ? '#10b981' : '#6366f1'
+          color: edgeColor
+        },
+        labelStyle: {
+          fontSize: 10,
+          fontWeight: 600,
+          fill: isDark ? '#94a3b8' : '#475569'
+        },
+        labelBgStyle: {
+          fill: isDark ? '#0f172a' : '#ffffff',
+          fillOpacity: 0.95,
+          stroke: isDark ? '#334155' : '#e2e8f0',
+          strokeWidth: 1
         }
       };
     });
 
     return { nodes: enrichedNodes, edges: enrichedEdges, stages };
-  }, [graphData, completedNodes, selectedNodeId, orientation, handleStatusChange]);
+  }, [graphData, completedNodes, selectedNodeId, orientation, isDark, handleStatusChange]);
 
   // Sync ReactFlow internal state with computed nodes and edges
   useEffect(() => {
@@ -357,33 +390,14 @@ function InnerRoadmapCanvas({
   );
 
   return (
-    <div className={`w-full h-full relative bg-slate-950 overflow-hidden flex flex-col ${className || ''}`}>
-      {/* Stage Fast-Navigator Strip */}
-      <div className="h-11 bg-slate-900/90 border-b border-slate-800/90 px-4 flex items-center gap-2 overflow-x-auto text-xs z-10 shrink-0 shadow-sm no-print">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0 flex items-center gap-1">
-          <Layers className="w-3.5 h-3.5 text-indigo-400" />
-          Navigate Stage:
-        </span>
-        {computedGraph.stages?.map((st, idx) => {
-          const isSelected = activeStageFilter === st;
-          return (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => handleFocusStage(st)}
-              className={clsx(
-                'inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-semibold transition-all shrink-0 border',
-                isSelected
-                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-                  : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
-              )}
-            >
-              <span>{st}</span>
-              <ChevronRight className="w-3 h-3 opacity-60" />
-            </button>
-          );
-        })}
-      </div>
+    <div className={`w-full h-full relative bg-[#f8fafc] dark:bg-[#0b0f19] overflow-hidden flex flex-col transition-colors duration-200 ${className || ''}`}>
+      {/* Timescale Stage Progression Bar */}
+      <Timescale
+        graphData={graphData}
+        completedNodes={completedNodes}
+        activeStage={activeStageFilter}
+        onFocusStage={handleFocusStage}
+      />
 
       {/* Main Flow Canvas */}
       <div className="flex-1 w-full h-full relative">
@@ -400,91 +414,92 @@ function InnerRoadmapCanvas({
           defaultEdgeOptions={{ type: 'smoothstep' }}
           className="touch-none"
         >
-          <Background color="#1e293b" gap={28} size={1.5} />
+          <Background color={isDark ? '#1e293b' : '#cbd5e1'} gap={28} size={1.5} />
           <Controls
-            className="!bg-slate-900/95 !border-slate-800 !fill-slate-200 !rounded-xl !shadow-2xl [&>button]:!border-slate-800 [&>button]:!bg-slate-900 [&>button]:!text-slate-200 hover:[&>button]:!bg-slate-800"
+            className="!bg-white/95 dark:!bg-slate-900/95 !border-slate-200 dark:!border-slate-800 !fill-slate-700 dark:!fill-slate-200 !rounded-xl !shadow-lg dark:!shadow-2xl [&>button]:!border-slate-200 dark:[&>button]:!border-slate-800 [&>button]:!bg-white dark:[&>button]:!bg-slate-900 [&>button]:!text-slate-700 dark:[&>button]:!text-slate-200 hover:[&>button]:!bg-slate-100 dark:hover:[&>button]:!bg-slate-800"
             showInteractive={false}
           />
           <MiniMap
             nodeStrokeWidth={3}
             nodeColor={(node) => {
               if (node.data?.status === 'completed') return '#10b981';
-              if (node.data?.status === 'available') return '#6366f1';
-              return '#475569';
+              if (node.data?.status === 'available') return '#3b82f6';
+              return isDark ? '#475569' : '#cbd5e1';
             }}
-            className="!bg-slate-900/90 !border-slate-800 !rounded-xl !shadow-2xl hidden md:block"
+            maskColor={isDark ? 'rgba(11, 15, 25, 0.75)' : 'rgba(248, 250, 252, 0.75)'}
+            className="!bg-white/90 dark:!bg-slate-900/90 !border-slate-200 dark:!border-slate-800 !rounded-xl !shadow-lg dark:!shadow-2xl hidden md:block"
           />
 
           {/* Top Left: Blueprint Tag & Progress Meter */}
           <Panel position="top-left" className="m-3 flex flex-wrap items-center gap-2 pointer-events-auto">
             {/* Progress Badge */}
-            <div className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-800 shadow-xl text-slate-100">
+            <div className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-md dark:shadow-xl text-slate-900 dark:text-slate-100">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                 <span className="text-xs font-bold">
                   {stats.completedCount} / {stats.total} Done ({stats.progressPercent}%)
                 </span>
               </div>
-              <div className="w-16 sm:w-20 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-750">
+              <div className="w-16 sm:w-20 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-750">
                 <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-300 rounded-full"
+                  className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-300 rounded-full"
                   style={{ width: `${stats.progressPercent}%` }}
                 />
               </div>
             </div>
 
             {/* Technical Blueprint Badge */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/80 backdrop-blur-md border border-slate-800/80 text-[10px] font-mono text-slate-400">
-              <span className="text-indigo-400 font-bold">FIG. 1.0</span>
-              <span className="text-slate-600">|</span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/90 dark:bg-slate-950/80 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 text-[10px] font-mono text-slate-600 dark:text-slate-400 shadow-xs">
+              <span className="text-blue-600 dark:text-indigo-400 font-bold">FIG. 1.0</span>
+              <span className="text-slate-300 dark:text-slate-600">|</span>
               <span>UDCPR 2020 DAG</span>
             </div>
           </Panel>
 
           {/* Bottom Center: Floating Glassmorphism Quick-Nav Dock */}
           <Panel position="bottom-center" className="mb-4 z-20">
-            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl bg-slate-900/90 backdrop-blur-xl border border-slate-750 shadow-2xl text-slate-200">
+            <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-lg dark:shadow-xl text-slate-800 dark:text-slate-200">
               {/* Next Actionable Step Trigger */}
               <button
                 type="button"
                 onClick={handleFocusActionable}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
                 title="Center camera on the next actionable step"
               >
                 <Target className="w-3.5 h-3.5 animate-pulse" />
                 <span>Next Step</span>
               </button>
 
-              <div className="h-4 w-px bg-slate-800 mx-0.5" />
+              <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-0.5" />
 
               {/* Layout Orientation Switcher */}
               <button
                 type="button"
                 onClick={() => setOrientation((prev) => (prev === 'TB' ? 'LR' : 'TB'))}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 active:scale-95 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700/60 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-750 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-semibold border border-slate-200 dark:border-slate-700/60 active:scale-95 transition-all cursor-pointer"
                 title="Toggle between Vertical Hierarchy and Horizontal Pipeline"
               >
                 {orientation === 'TB' ? (
                   <>
-                    <ArrowRightLeft className="w-3.5 h-3.5 text-indigo-400" />
+                    <ArrowRightLeft className="w-3.5 h-3.5 text-blue-600 dark:text-indigo-400" />
                     <span className="hidden md:inline">Horizontal</span>
                   </>
                 ) : (
                   <>
-                    <ArrowDownUp className="w-3.5 h-3.5 text-indigo-400" />
+                    <ArrowDownUp className="w-3.5 h-3.5 text-blue-600 dark:text-indigo-400" />
                     <span className="hidden md:inline">Vertical</span>
                   </>
                 )}
               </button>
 
-              <div className="h-4 w-px bg-slate-800 mx-0.5" />
+              <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-0.5" />
 
               {/* Zoom Controls Pill */}
-              <div className="flex items-center gap-0.5 bg-slate-950/70 border border-slate-800 rounded-xl p-0.5">
+              <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-xl p-0.5">
                 <button
                   type="button"
                   onClick={() => zoomOut({ duration: 300 })}
-                  className="p-1.5 rounded-lg hover:bg-slate-800 active:scale-90 text-slate-300 hover:text-white transition-all cursor-pointer"
+                  className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 active:scale-90 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
                   title="Zoom Out"
                 >
                   <ZoomOut className="w-3.5 h-3.5" />
@@ -492,7 +507,7 @@ function InnerRoadmapCanvas({
                 <button
                   type="button"
                   onClick={handleResetZoom}
-                  className="px-2 py-1 text-[11px] font-mono font-semibold text-slate-300 hover:text-indigo-300 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                  className="px-2 py-1 text-[11px] font-mono font-semibold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-indigo-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                   title="Reset to 100% Zoom"
                 >
                   100%
@@ -500,7 +515,7 @@ function InnerRoadmapCanvas({
                 <button
                   type="button"
                   onClick={() => zoomIn({ duration: 300 })}
-                  className="p-1.5 rounded-lg hover:bg-slate-800 active:scale-90 text-slate-300 hover:text-white transition-all cursor-pointer"
+                  className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 active:scale-90 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
                   title="Zoom In"
                 >
                   <ZoomIn className="w-3.5 h-3.5" />
@@ -511,23 +526,23 @@ function InnerRoadmapCanvas({
               <button
                 type="button"
                 onClick={() => fitView({ padding: 0.15, duration: 400 })}
-                className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-750 active:scale-90 text-slate-300 hover:text-white border border-slate-700/60 transition-all cursor-pointer"
+                className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-750 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700/60 active:scale-90 transition-all cursor-pointer"
                 title="Fit entire map in window"
               >
-                <Maximize2 className="w-3.5 h-3.5 text-indigo-400" />
+                <Maximize2 className="w-3.5 h-3.5 text-blue-600 dark:text-indigo-400" />
               </button>
 
-              <div className="hidden lg:flex items-center gap-3 pl-2 border-l border-slate-800 text-[10px] text-slate-400">
+              <div className="hidden lg:flex items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400">
                 <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                   <span>Done</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-indigo-400" />
+                  <span className="w-2 h-2 rounded-full bg-blue-500 dark:bg-indigo-400" />
                   <span>Ready</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-slate-600" />
+                  <span className="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-600" />
                   <span>Locked</span>
                 </div>
               </div>
