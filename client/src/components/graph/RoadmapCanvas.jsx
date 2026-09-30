@@ -15,7 +15,6 @@ import '@xyflow/react/dist/style.css';
 
 import CivicNode from './CivicNode';
 import Timescale from './Timescale';
-import StatutoryTimelineRuler from './StatutoryTimelineRuler';
 import StatutoryClearanceDossierModal from '../modals/StatutoryClearanceDossierModal';
 import { triggerCelebrationConfetti } from '../../utils/confetti';
 import {
@@ -425,15 +424,6 @@ function InnerRoadmapCanvas({
         completedNodes={completedNodes}
         activeStage={activeStageFilter}
         onFocusStage={handleFocusStage}
-      />
-
-      {/* Visual Statutory Timeline / Ruler Milestone Journey */}
-      <StatutoryTimelineRuler
-        graphData={graphData}
-        completedNodes={completedNodes}
-        activeStage={activeStageFilter}
-        onFocusStage={handleFocusStage}
-        onOpenDossier={() => setIsDossierOpen(true)}
       />
 
       {/* Main Flow Canvas */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Compass,
   Sparkles,
@@ -6,12 +6,7 @@ import {
   Search,
   AlertCircle,
   HelpCircle,
-  X,
-  Play,
-  Pause,
-  RotateCcw,
-  FastForward,
-  CheckCircle
+  X
 } from 'lucide-react';
 import clsx from 'clsx';
 import GlowCardGrid from './GlowCardGrid';
@@ -104,23 +99,6 @@ export default function HomePage({
     e.preventDefault();
     onStartConstruct(searchQuery);
   };
-
-  const handleSkipAll = useCallback(() => {
-    setActiveStep(TOTAL_STEPS);
-    setIsPlaying(false);
-  }, []);
-
-  const handleRestart = useCallback(() => {
-    setActiveStep(1);
-    setIsPlaying(true);
-    lastScrolledStepRef.current = 1;
-    if (containerRef.current) {
-      containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    if (onReplayIntro) {
-      onReplayIntro();
-    }
-  }, [onReplayIntro]);
 
   const isStepVisible = (step) => activeStep >= step;
   const isCurrentStep = (step) => activeStep === step;
@@ -223,7 +201,7 @@ export default function HomePage({
                       }
                     }}
                     placeholder="e.g., I want to construct a commercial complex in Pune / residential house / school..."
-                    className="w-full bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white dark:bg-slate-950/70 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-400 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-inner"
+                    className="w-full bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white dark:bg-slate-950/70 dark:border-slate-700 dark:text-black dark:placeholder-slate-400 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-inner"
                   />
                 </div>
 
@@ -255,7 +233,7 @@ export default function HomePage({
                   <div className="flex-1 space-y-1">
                     <div className="font-bold text-[12px]">
                       {scopeFeedback.status === 'OUT_OF_SCOPE'
-                        ? 'Requirement Outside Vertexa Scope'
+                        ? 'Requirement Outside CivicPath Scope'
                         : 'Clarification Needed'}
                     </div>
                     <p className="leading-relaxed text-[11px] opacity-90">
@@ -347,60 +325,6 @@ export default function HomePage({
           />
         </div>
 
-      </div>
-
-      {/* Floating Interactive Sequential Controller Bar */}
-      <div className="fixed bottom-5 right-5 z-40 flex items-center gap-2 p-1.5 sm:p-2 rounded-2xl bg-slate-900/90 backdrop-blur-md border border-slate-750/90 shadow-2xl shadow-indigo-950/40 text-xs select-none transition-all">
-        {/* Step Indicator & Progress */}
-        <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-slate-800/80 border border-slate-700/60 text-slate-200">
-          <div className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
-          <span className="font-bold text-[11px] text-indigo-300">
-            Step {activeStep}/{TOTAL_STEPS}
-          </span>
-          <span className="text-[10px] text-slate-400 hidden md:inline">
-            ({activeStep === 1 ? '8s' : '15s'} interval)
-          </span>
-        </div>
-
-        {/* Play / Pause Toggle */}
-        <button
-          type="button"
-          onClick={() => setIsPlaying((p) => !p)}
-          title={isPlaying ? 'Pause Auto-Reveal' : 'Resume Auto-Reveal'}
-          className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white transition-colors cursor-pointer"
-        >
-          {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
-        </button>
-
-        {/* Restart Tour */}
-        <button
-          type="button"
-          onClick={handleRestart}
-          title="Restart Intro & Sequential Reveal from Top"
-          className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white transition-colors cursor-pointer"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Skip / Reveal All Button */}
-        {activeStep < TOTAL_STEPS && (
-          <button
-            type="button"
-            onClick={handleSkipAll}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[11px] shadow-sm transition-all cursor-pointer"
-            title="Reveal all content immediately"
-          >
-            <FastForward className="w-3.5 h-3.5" />
-            <span>Show All</span>
-          </button>
-        )}
-
-        {activeStep === TOTAL_STEPS && (
-          <div className="flex items-center gap-1 px-2 text-[11px] text-emerald-400 font-medium">
-            <CheckCircle className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Complete</span>
-          </div>
-        )}
       </div>
     </div>
   );

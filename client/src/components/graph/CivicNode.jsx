@@ -128,11 +128,11 @@ export default function CivicNode({ data, selected }) {
         <span
           className={clsx(
             'inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg font-medium truncate max-w-full border',
-            'bg-slate-100 dark:bg-slate-850 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-750'
+            'bg-slate-100 dark:bg-slate-850 text-black dark:text-black border-slate-200 dark:border-slate-750'
           )}
         >
-          <Building className="w-3 h-3 shrink-0 text-slate-500 dark:text-slate-400" />
-          <span className="truncate">{department}</span>
+          <Building className="w-3 h-3 shrink-0 text-slate-700 dark:text-slate-700" />
+          <span className="truncate text-black dark:text-black">{department}</span>
         </span>
       </div>
 

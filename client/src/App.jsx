@@ -400,7 +400,7 @@ export default function App() {
   // 1. Controlled Hydration / Initial State Recovery
   const initialSession = useMemo(() => loadActiveSession(FALLBACK_SEED_GRAPH), []);
 
-  const [currentView, setCurrentView] = useState(() => initialSession.currentView);
+  const [currentView, setCurrentView] = useState('home');
   const [searchQuery, setSearchQuery] = useState(() => initialSession.searchQuery);
   const [selectedCity, setSelectedCity] = useState(() => initialSession.selectedCity);
   const [graphData, setGraphData] = useState(() => initialSession.graphData || FALLBACK_SEED_GRAPH);
@@ -420,23 +420,12 @@ export default function App() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [scopeFeedback, setScopeFeedback] = useState(null);
 
-  // Session-isolated intro screen (plays once per browser session)
-  const [showIntro, setShowIntro] = useState(() => {
-    try {
-      if (typeof window === 'undefined') return false;
-      return sessionStorage.getItem('civicpath_intro_seen') !== 'true';
-    } catch {
-      return false;
-    }
-  });
+  // Intro screen plays on launch and transitions to the Home page
+  const [showIntro, setShowIntro] = useState(true);
 
   const handleFinishIntro = useCallback(() => {
     setShowIntro(false);
-    try {
-      sessionStorage.setItem('civicpath_intro_seen', 'true');
-    } catch {
-      // Safe fallback
-    }
+    setCurrentView('home');
   }, []);
 
   // Apply initial theme on mount
@@ -679,9 +668,6 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-50 text-slate-900 dark:bg-[#060911] dark:text-slate-100 overflow-hidden font-sans select-none transition-colors duration-200">
-      {/* 0. Apple Hello-inspired Cursive Preloader Intro Screen (Plays once per session) */}
-      {showIntro && <CivicIntroScreen onFinish={handleFinishIntro} />}
-
       {/* Top Navigation Bar (Hidden during print) */}
       <header className="h-16 shrink-0 bg-white/95 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between gap-4 z-30 shadow-sm dark:shadow-md backdrop-blur-md no-print">
         {/* Brand & Logo */}

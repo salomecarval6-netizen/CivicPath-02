@@ -46,10 +46,10 @@ export default function CivicIntroScreen({ onFinish }) {
 
     // Auto-advance lifecycle:
     // 0.0s - 2.0s: Cursive handwriting animation & glow fill
-    // 8.0s: Start smooth fade out and complete
+    // 3.5s: Start smooth fade out and complete
     const autoDismissTimer = setTimeout(() => {
       completeIntro();
-    }, 8000);
+    }, 3500);
 
     const handleKeyDown = (e) => {
       if (['Escape', 'Enter', ' ', 'ArrowRight'].includes(e.key)) {
